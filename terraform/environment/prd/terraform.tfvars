@@ -1,0 +1,8 @@
+location                  = "West Europe"
+resource_group_name       = "rg-cc-prd-frontend-001"
+environment               = "prd"
+project_name              = "TENSORA-COUNT"
+api_base_url              = "/api/v1"
+COSMOS_DB_ENDPOINT        = "https://count-cosmosdb.documents.azure.com:443/"
+COSMOS_DB_PRIMARY_KEY     = "USIglqkLgcni7rPGH5VaECPeXqgEQVCEa1fJ3fbUpMRLzp9rBRQFNWbMpxIASXRcKT9KHYqPXZnlACDbxXFy6g=="
+COSMOS_DB_DATABASE_NAME   = "tensora-count"
