@@ -1,4 +1,5 @@
 fastapi
+aiohttp
 uvicorn
 pydantic
 azure.cosmos

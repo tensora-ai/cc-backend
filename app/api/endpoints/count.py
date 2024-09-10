@@ -1,24 +1,23 @@
-from fastapi import APIRouter, Depends
-from app.models.count import *
-from app.services.count_addition_service import CountAdditionService, get_count_addition_service
-from app.core.logging import get_logger
+from fastapi import APIRouter
+from app.models.count import AddCountsInput, AddCountsOutput
 from app.resources import app_resources
 
 router = APIRouter()
 
-logger = get_logger(__name__)
 
-@router.post("/", response_model=Output)
-async def create_prediction_sum(input: Input, service: CountAdditionService = Depends(get_count_addition_service)) -> Output:
+@router.post("/sum_predictions", response_model=AddCountsOutput)
+async def create_prediction_sum(
+    input: AddCountsInput,
+) -> AddCountsOutput:
     """
-    Erstellt eine Prediction Sum für ein Bestimmtes Intervall.
+    Erstellt eine Prediction Sum für ein gegebenes Intervall.
 
     Args:
-        input (Input): Die Input Daten für die Prediction Sum.
+        input (AddCountsOutput): Die Input Daten für die Prediction Sum.
 
     Returns:
-        Output: Die Antwort mit der PredictionSum Liste.
+        AddCountsOutput: Die Antwort mit der PredictionSum Liste.
     """
-    return await service.get_prediction_sum(input, app_resources["area_cps"])
-
-
+    return await app_resources["count_add_service"](
+        input, app_resources["area_cps"][input.project]
+    )
