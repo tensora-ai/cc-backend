@@ -42,7 +42,7 @@ class CountAdditionService:
             start_dt + timedelta(seconds=s) for s in rescaled_dates_grid
         ]
         result = [
-            PredictionSum(timestamp=dt, prediction=int(pred))
+            PredictionSum(timestamp=dt, prediction=max(0, int(pred)))
             for dt, pred in zip(dates_grid, sum_mv)
         ]
         return AddCountsOutput(predictions_sum=result)
