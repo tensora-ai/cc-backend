@@ -1,8 +1,10 @@
-from datetime import datetime, timedelta
 import numpy as np
 import asyncio
+from fastapi import HTTPException
+from datetime import datetime, timedelta
 from scipy.interpolate import interp1d
 from azure.cosmos import ContainerProxy
+
 from app.models.count import AddCountsInput, AddCountsOutput, PredictionSum
 
 datetime_format = "%Y-%m-%dT%H:%M:%SZ"
@@ -62,7 +64,12 @@ class CountAdditionService:
         )
 
         interpolation_funcs = []
-        for dates, counts in all_preds:
+        empty_cps = []
+        for (dates, counts), cp in all_preds:
+            if len(dates) == 0:
+                empty_cps.append(cp)
+                continue
+
             # To calculate a reasonable variable for the x-axis
             rescaled_dates = [
                 (
@@ -79,6 +86,12 @@ class CountAdditionService:
                     fill_value="extrapolate",
                 )
             )
+
+        if len(empty_cps) > 0:
+            raise HTTPException(
+                status_code=422,
+                detail=f"No predictions found for cameras and positions {empty_cps}.",
+            )
         return interpolation_funcs
 
     # --------------------------------------------------------------------------
@@ -91,7 +104,7 @@ class CountAdditionService:
         """Returns a list of tuples with dates and counts for each camera and position."""
         all_preds = [
             self.db_client.query_items(
-                query=f"SELECT c.timestamp, c.counts FROM c WHERE c.camera = '{cam}' AND c.position = '{pos}' AND c.timestamp >= '{start_date_str}' AND c.timestamp <= '{input.end_date}'",
+                query=f"SELECT * FROM c WHERE c.camera = '{cam}' AND c.position = '{pos}' AND c.timestamp >= '{start_date_str}' AND c.timestamp <= '{input.end_date}'",
                 partition_key=input.project,
             )
             for cam, pos in cam_pos
@@ -106,11 +119,14 @@ class CountAdditionService:
 
             return (camera_dates, camera_counts)
 
-        return await asyncio.gather(
-            *[
-                retrieve_dates_and_counts(predictions)
-                for predictions in all_preds
-            ]
+        return zip(
+            await asyncio.gather(
+                *[
+                    retrieve_dates_and_counts(predictions)
+                    for predictions in all_preds
+                ]
+            ),
+            cam_pos,
         )
 
     # --------------------------------------------------------------------------
