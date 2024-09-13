@@ -24,16 +24,21 @@ class CountAdditionService:
         start_date_str = start_dt.strftime(datetime_format)
 
         # Interpolate predictions from all cameras
-        interpolation_funcs = await self._construct_interpolation_funcs(
-            area_cps, input, start_dt, start_date_str
+        interpolation_funcs, min_date, max_date = (
+            await self._construct_interpolation_funcs(
+                area_cps, input, start_dt, start_date_str
+            )
         )
 
-        # Evaluate sum of all cameras on equidistant grid
+        # Evaluate sum of all cameras on equidistant grid between overall lowest
+        # and highest date given in predictions from all cameras
         rescaled_dates_grid = np.linspace(
-            0,
-            (end_dt - start_dt).total_seconds(),
+            (min_date - start_dt).total_seconds(),
+            (max_date - start_dt).total_seconds(),
             num=int(input.lookback_hours * 120),
         )
+        print(rescaled_dates_grid)
+
         sum = np.array(
             [f(rescaled_dates_grid) for f in interpolation_funcs]
         ).sum(axis=0)
@@ -92,7 +97,16 @@ class CountAdditionService:
                 status_code=422,
                 detail=f"No predictions found for cameras and positions {empty_cps}.",
             )
-        return interpolation_funcs
+
+        min_date = datetime.strptime(
+            min([all_preds[i][0][0][0] for i in range(len(all_preds))]),
+            datetime_format,
+        )
+        max_date = datetime.strptime(
+            max([all_preds[i][0][0][-1] for i in range(len(all_preds))]),
+            datetime_format,
+        )
+        return interpolation_funcs, min_date, max_date
 
     # --------------------------------------------------------------------------
     async def _retrieve_all_predictions(
@@ -119,14 +133,16 @@ class CountAdditionService:
 
             return (camera_dates, camera_counts)
 
-        return zip(
-            await asyncio.gather(
-                *[
-                    retrieve_dates_and_counts(predictions)
-                    for predictions in all_preds
-                ]
-            ),
-            cam_pos,
+        return list(
+            zip(
+                await asyncio.gather(
+                    *[
+                        retrieve_dates_and_counts(predictions)
+                        for predictions in all_preds
+                    ]
+                ),
+                cam_pos,
+            )
         )
 
     # --------------------------------------------------------------------------
