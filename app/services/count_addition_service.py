@@ -37,7 +37,6 @@ class CountAdditionService:
             (max_date - start_dt).total_seconds(),
             num=int(input.lookback_hours * 120),
         )
-        print(rescaled_dates_grid)
 
         sum = np.array(
             [f(rescaled_dates_grid) for f in interpolation_funcs]
@@ -73,29 +72,32 @@ class CountAdditionService:
         for (dates, counts), cp in all_preds:
             if len(dates) == 0:
                 empty_cps.append(cp)
-                continue
 
-            # To calculate a reasonable variable for the x-axis
-            rescaled_dates = [
-                (
-                    datetime.strptime(d, datetime_format) - start_dt
-                ).total_seconds()
-                for d in dates
-            ]
+            elif len(dates) == 1:
+                interpolation_funcs.append(lambda d: [counts[0]] * len(d))
 
-            interpolation_funcs.append(
-                interp1d(
-                    np.array(rescaled_dates),
-                    np.array(counts),
-                    kind="linear",
-                    fill_value="extrapolate",
+            else:
+                # To calculate a reasonable variable for the x-axis
+                rescaled_dates = [
+                    (
+                        datetime.strptime(d, datetime_format) - start_dt
+                    ).total_seconds()
+                    for d in dates
+                ]
+
+                interpolation_funcs.append(
+                    interp1d(
+                        np.array(rescaled_dates),
+                        np.array(counts),
+                        kind="linear",
+                        fill_value="extrapolate",
+                    )
                 )
-            )
 
         if len(empty_cps) > 0:
             raise HTTPException(
                 status_code=422,
-                detail=f"No predictions found for cameras and positions {empty_cps}.",
+                detail=f"Not enough predictions found for cameras and positions {empty_cps}.",
             )
 
         min_date = datetime.strptime(
