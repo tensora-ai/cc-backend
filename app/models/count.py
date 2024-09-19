@@ -49,3 +49,4 @@ class AddCountsOutput(
 ):
 
     predictions_sum: list[PredictionSum]
+    latest_ids: list[str]

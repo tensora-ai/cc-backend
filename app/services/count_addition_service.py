@@ -24,7 +24,7 @@ class CountAdditionService:
         start_date_str = start_dt.strftime(datetime_format)
 
         # Interpolate predictions from all cameras
-        interpolation_funcs, min_date, max_date = (
+        interpolation_funcs, min_date, max_date, latest_ids = (
             await self._construct_interpolation_funcs(
                 area_cps, input, start_dt, start_date_str
             )
@@ -51,7 +51,7 @@ class CountAdditionService:
             PredictionSum(timestamp=dt, prediction=max(0, int(pred)))
             for dt, pred in zip(dates_grid, sum_mv)
         ]
-        return AddCountsOutput(predictions_sum=result)
+        return AddCountsOutput(predictions_sum=result, latest_ids=latest_ids)
 
     # --------------------------------------------------------------------------
     async def _construct_interpolation_funcs(
@@ -60,24 +60,32 @@ class CountAdditionService:
         input: AddCountsInput,
         start_dt: datetime,
         start_date_str: str,
-    ) -> list[interp1d]:
+    ) -> tuple[list[interp1d], datetime, datetime, list[str]]:
         """Returns a list of interpolation functions for the predictions of each
-        camera and position."""
+        camera and position together earliest and latest datetime of all
+        predictions and a list with the ids of all latest predictions."""
         all_preds = await self._retrieve_all_predictions(
             area_cps[input.area], input, start_date_str
         )
 
         interpolation_funcs = []
+        latest_ids = []
         empty_cps = []
         for (dates, counts), cp in all_preds:
+            latest_date = datetime.strptime(dates[-1], datetime_format)
+            latest_ids.append(
+                f"{input.project}-{cp[0]}-{cp[1]}-{datetime.strftime(latest_date, '%Y_%m_%d-%H_%M_%S')}"
+            )
+
             if len(dates) == 0:
                 empty_cps.append(cp)
 
+            # If only one prediction is available, return a constant function
             elif len(dates) == 1:
                 interpolation_funcs.append(lambda d: [counts[0]] * len(d))
 
             else:
-                # To calculate a reasonable variable for the x-axis
+                # Calculate a reasonable variable for the x-axis
                 rescaled_dates = [
                     (
                         datetime.strptime(d, datetime_format) - start_dt
@@ -108,7 +116,7 @@ class CountAdditionService:
             max([all_preds[i][0][0][-1] for i in range(len(all_preds))]),
             datetime_format,
         )
-        return interpolation_funcs, min_date, max_date
+        return interpolation_funcs, min_date, max_date, latest_ids
 
     # --------------------------------------------------------------------------
     async def _retrieve_all_predictions(
