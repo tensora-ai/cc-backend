@@ -1,11 +1,16 @@
+variable "subscription_id" {
+  type        = string
+  description = "The Azure subscription id"
+}
+
 variable "location" {
   type        = string
   description = "The Azure location for all resources"
 }
 
-variable "resource_group_name" {
+variable "customer" {
   type        = string
-  description = "The name of the Azure resource group"
+  description = "The name of the customer"
 }
 
 variable "environment" {
@@ -13,28 +18,8 @@ variable "environment" {
   description = "Environment to deploy the resources (e.g. pro, dev etc.)"
 }
 
-variable "project_name" {
+variable "api_key" {
   type        = string
-  description = "Name of the project"
-}
-
-variable "api_base_url" {
-  type    = string
-  default = "Base URL of the Profiles API"
-}
-
-variable "COSMOS_DB_ENDPOINT" {
-  type    = string
-  default = "Base URL of the CosmosDB Endpoint"
-}
-
-variable "COSMOS_DB_PRIMARY_KEY" {
-  type    = string
-  default = "Primary Key for the CosmosDB"
-}
-
-variable "COSMOS_DB_DATABASE_NAME" {
-  type    = string
-  default = "Database Name of the relevant Cosmos Database"
+  description = "Valid API Key for authentication"
 }
 

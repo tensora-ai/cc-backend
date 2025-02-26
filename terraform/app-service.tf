@@ -1,25 +1,37 @@
-resource "azurerm_container_registry" "tensora_count" {
-  name                = "crcount${var.environment}001"
-  resource_group_name = var.resource_group_name
+resource "azurerm_container_registry" "count" {
+  name                = "acrcount${var.customer}${var.environment}"
+  resource_group_name = "rg-count-${var.customer}-${var.environment}-operations"
   location            = var.location
   sku                 = "Basic"
   admin_enabled       = true
+
+  tags = {
+    project_name = "Tensora Count"
+    customer     = var.customer
+    environment  = var.environment
+  }
 }
 
-resource "azurerm_service_plan" "profiles" {
-  name                = "asp-profiles-backend-${var.environment}-001"
-  resource_group_name = var.resource_group_name
+resource "azurerm_service_plan" "count" {
+  name                = "asp-count-${var.customer}-${var.environment}"
+  resource_group_name = "rg-count-${var.customer}-${var.environment}-apps"
   location            = var.location
 
   os_type  = "Linux"
-  sku_name = var.environment == "prd" ? "P0v3" : "B1"
+  sku_name = var.environment == "dev" ? "B1" : "P0v3"
+
+  tags = {
+    project_name = "Tensora Count"
+    customer     = var.customer
+    environment  = var.environment
+  }
 }
 
-resource "azurerm_linux_web_app" "tensora_count_backend" {
-  name                = "tensora-count-backend-${var.environment}"
-  resource_group_name = var.resource_group_name
+resource "azurerm_linux_web_app" "count_backend" {
+  name                = "app-count-${var.customer}-${var.environment}-backend"
+  resource_group_name = "rg-count-${var.customer}-${var.environment}-apps"
   location            = var.location
-  service_plan_id     = azurerm_service_plan.profiles.id
+  service_plan_id     = azurerm_service_plan.count.id
 
   logs {
     application_logs {
@@ -35,10 +47,10 @@ resource "azurerm_linux_web_app" "tensora_count_backend" {
 
   site_config {
     application_stack {
-      docker_image_name        = "tensora-count-backend:${var.environment}"
-      docker_registry_url      = "https://${azurerm_container_registry.profiles.login_server}"
-      docker_registry_username = azurerm_container_registry.profiles.admin_username
-      docker_registry_password = azurerm_container_registry.profiles.admin_password
+      docker_image_name        = "count-${var.customer}-${var.environment}-backend:latest"
+      docker_registry_url      = "https://${azurerm_container_registry.count.login_server}"
+      docker_registry_username = azurerm_container_registry.count.admin_username
+      docker_registry_password = azurerm_container_registry.count.admin_password
     }
 
     always_on                         = true
@@ -51,11 +63,11 @@ resource "azurerm_linux_web_app" "tensora_count_backend" {
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
     WEBSITES_CONTAINER_START_LIMIT      = 1800
     WEBSITES_PORT                       = 8000
-    PROJECT_NAME                        = var.project_name
-    API_BASE_URL                        = var.api_base_url
-    COSMOS_DB_ENDPOINT                  = var.COSMOS_DB_ENDPOINT
-    COSMOS_DB_PRIMARY_KEY               = var.COSMOS_DB_PRIMARY_KEY
-    COSMOS_DB_DATABASE_NAME             = var.COSMOS_DB_DATABASE_NAME
+    WEBSITE_HTTPLOGGING_RETENTION_DAYS  = 14
+    API_KEY                             = var.api_key
+    COSMOS_DB_ENDPOINT                  = azurerm_cosmosdb_account.count.endpoint
+    COSMOS_DB_PRIMARY_KEY               = azurerm_cosmosdb_account.count.primary_key
+    COSMOS_DB_DATABASE_NAME             = azurerm_cosmosdb_sql_database.count.name
   }
 
   lifecycle {
@@ -66,6 +78,8 @@ resource "azurerm_linux_web_app" "tensora_count_backend" {
   }
 
   tags = {
-    environment = var.environment
+    project_name = "Tensora Count"
+    customer     = var.customer
+    environment  = var.environment
   }
 }
