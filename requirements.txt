@@ -2,6 +2,6 @@ fastapi
 aiohttp
 uvicorn
 pydantic
-azure.cosmos
+azure-cosmos
 scipy
 python-dotenv
