@@ -1,6 +1,6 @@
 output "cosmos_db_endpoint" {
   description = "The endpoint of the Cosmos database"
-  value       = azurerm_cosmosdb_account.db_account.endpoint
+  value       = azurerm_cosmosdb_account.count.endpoint
 }
 
 output "app_service_endpoint" {
