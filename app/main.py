@@ -20,12 +20,12 @@ def validate_api_key(api_key: str = Security(api_key_header)):
 
 # ------------------------------------------------------------------------------
 app = FastAPI(
-    title="Heute AT - AI Article Utilities",
-    version="0.1.0",
+    title="Tensora Count Backend",
+    version="1.0",
     dependencies=[Depends(validate_api_key)],
     lifespan=lifespan,
 )
 
 
 app = FastAPI(title="Tensora Count Backend", lifespan=lifespan)
-app.include_router(router, prefix="/api")
+app.include_router(router, prefix="/api/v1")
