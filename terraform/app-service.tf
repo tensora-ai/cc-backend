@@ -63,7 +63,6 @@ resource "azurerm_linux_web_app" "count_backend" {
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
     WEBSITES_CONTAINER_START_LIMIT      = 1800
     WEBSITES_PORT                       = 8000
-    WEBSITE_HTTPLOGGING_RETENTION_DAYS  = 14
     API_KEY                             = var.api_key
     COSMOS_DB_ENDPOINT                  = azurerm_cosmosdb_account.count.endpoint
     COSMOS_DB_PRIMARY_KEY               = azurerm_cosmosdb_account.count.primary_key
