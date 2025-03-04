@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
     database_client = CosmosClient(
         url=os.getenv("COSMOS_DB_ENDPOINT"),
         credential=os.getenv("COSMOS_DB_PRIMARY_KEY"),
-    ).get_database_client("tensora-count")
+    ).get_database_client(os.getenv("COSMOS_DB_DATABASE_NAME"))
 
     app_resources["area_cps"] = await get_camera_areas(
         database_client.get_container_client("projects")
