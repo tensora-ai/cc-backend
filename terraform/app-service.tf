@@ -13,7 +13,7 @@ resource "azurerm_container_registry" "count" {
 }
 
 resource "azurerm_service_plan" "count" {
-  name                = "asp-count-${var.customer}-${var.environment}"
+  name                = "asp-count-${var.customer}-${var.environment}-backend"
   resource_group_name = "rg-count-${var.customer}-${var.environment}-apps"
   location            = var.location
 
