@@ -3,5 +3,8 @@ aiohttp
 uvicorn
 pydantic
 azure-cosmos
+azure-storage-blob
 scipy
 python-dotenv
+pyclean
+
