@@ -14,7 +14,7 @@ class Area(BaseModel):
     camera_ids: List[CameraId]
 
 
-class GetProjectResponse(BaseModel):
+class GetFrontendProjectResponse(BaseModel):
     id: str
     name: str
     areas: Dict[str, Area]
