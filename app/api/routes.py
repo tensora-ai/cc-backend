@@ -9,6 +9,7 @@ router.include_router(health.router, prefix="/health", tags=["health"])
 router.include_router(
     frontend_projects.router, prefix="/frontend-projects", tags=["frontend-projects"]
 )
+router.include_router(predictions.router, prefix="/predictions", tags=["predictions"])
 
 
 # Add basic root endpoint

@@ -1,0 +1,154 @@
+import numpy as np
+from scipy.interpolate import interp1d
+from fastapi import HTTPException
+from typing import List, Tuple, Callable
+from datetime import datetime, timedelta
+
+from app.models.prediction import (
+    TimeSeriesPoint,
+    DATETIME_FORMAT,
+    PredictionData,
+    InterpolationResult,
+)
+
+
+class PredictionProcessor:
+    """Utility class for processing prediction data."""
+
+    @staticmethod
+    def create_interpolation_functions(
+        predictions: List[PredictionData], start_dt: datetime, project_id: str
+    ) -> InterpolationResult:
+        """
+        Create interpolation functions for each camera's predictions.
+
+        Args:
+            predictions: List of prediction data for all cameras in an area
+            start_dt: Start datetime for the time series
+            project_id: Project identifier
+
+        Returns:
+            InterpolationResult: Object containing interpolation functions, min/max dates, and source IDs
+        Raises:
+            HTTPException: If there are cameras with no prediction data
+        """
+        # Check which cameras have no data
+        empty_cameras = [
+            f"{pred.camera_id}@{pred.position}"
+            for pred in predictions
+            if not pred.has_data
+        ]
+
+        if empty_cameras:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Not enough predictions found for cameras: {', '.join(empty_cameras)}",
+            )
+
+        # Create interpolation functions for each camera
+        interpolation_funcs = []
+        source_ids = []
+        date_strings = []
+
+        for pred in predictions:
+            # Create source ID for this camera
+            source_ids.append(f"{project_id}-{pred.source_id}")
+
+            # Collect all date strings for min/max calculation
+            date_strings.extend(pred.dates)
+
+            # Create interpolation function based on number of data points
+            if len(pred.dates) == 1:
+                # For a single data point, create a constant function
+                interpolation_funcs.append(
+                    lambda d, count=pred.counts[0]: np.full(len(d), count)
+                )
+            else:
+                # Calculate seconds elapsed since start_dt for each date
+                rescaled_dates = [
+                    (date - start_dt).total_seconds() for date in pred.dates
+                ]
+
+                # Create linear interpolation function
+                interpolation_funcs.append(
+                    interp1d(
+                        np.array(rescaled_dates),
+                        np.array(pred.counts),
+                        kind="linear",
+                        fill_value="extrapolate",
+                    )
+                )
+
+        # Find min and max dates across all predictions
+        min_date = datetime.strptime(min(date_strings), DATETIME_FORMAT)
+        max_date = datetime.strptime(max(date_strings), DATETIME_FORMAT)
+
+        return InterpolationResult(
+            interpolation_funcs=interpolation_funcs,
+            min_date=min_date,
+            max_date=max_date,
+            source_ids=source_ids,
+        )
+
+    @staticmethod
+    def apply_moving_average(values: np.ndarray, half_window_size: int) -> np.ndarray:
+        """
+        Apply a moving average filter to a time series.
+
+        Args:
+            values: Array of values to smooth
+            half_window_size: Half size of the averaging window
+                              (0 means no smoothing)
+
+        Returns:
+            Smoothed array of values
+
+        Notes:
+            Uses edge padding to avoid boundary issues.
+        """
+        # If no smoothing requested, return the original values
+        if half_window_size == 0:
+            return values
+
+        # Calculate full window size
+        window_size = 2 * half_window_size + 1
+
+        # Create a padded array to avoid edge effects
+        # We pad with the first and last values to avoid introducing
+        # artificial trends at the boundaries
+        padded_values = np.concatenate(
+            [
+                np.full(half_window_size, values[0]),  # Pad start with first value
+                values,  # Original data
+                np.full(half_window_size, values[-1]),  # Pad end with last value
+            ]
+        )
+
+        # Create a uniform filter window
+        window = np.ones(window_size) / window_size
+
+        # Apply convolution and return
+        return np.convolve(padded_values, window, mode="valid")
+
+    @staticmethod
+    def generate_time_points(
+        start_dt: datetime, time_grid: np.ndarray, values: np.ndarray
+    ) -> List[TimeSeriesPoint]:
+        """
+        Generate TimeSeriesPoint objects from time grid and values.
+
+        Args:
+            start_dt: Base datetime for the time grid
+            time_grid: Array of seconds since start_dt
+            values: Array of values corresponding to each time point
+
+        Returns:
+            List of TimeSeriesPoint objects
+        """
+        return [
+            TimeSeriesPoint(
+                timestamp=start_dt + timedelta(seconds=t),
+                value=max(0, int(v)),  # Ensure non-negative integers
+            )
+            for t, v in zip(time_grid, values)
+        ]
