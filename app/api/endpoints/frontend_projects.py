@@ -1,9 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from azure.cosmos import ContainerProxy
-from app.core.database import get_container
-from app.models.count import AddCountsInput, AddCountsOutput
+from fastapi import APIRouter, Depends
 from app.models.frontend_project import GetFrontendProjectResponse
-from app.resources import app_resources
 from app.services.frontend_project_service import (
     FrontendProjectService,
     get_frontend_project_service,
