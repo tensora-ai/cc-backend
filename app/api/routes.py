@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import frontend_projects, health, predictions
+from app.api.endpoints import frontend_projects, health, predictions, images
 
 # Create the main router
 router = APIRouter()
@@ -10,6 +10,7 @@ router.include_router(
     frontend_projects.router, prefix="/frontend-projects", tags=["frontend-projects"]
 )
 router.include_router(predictions.router, prefix="/predictions", tags=["predictions"])
+router.include_router(images.router, prefix="/images", tags=["images"])
 
 
 # Add basic root endpoint
