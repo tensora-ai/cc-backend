@@ -1,21 +1,13 @@
 from fastapi import APIRouter
-from app.api.endpoints import count
+from app.api.endpoints import health, predictions, projects
 
 # Create the main router
 router = APIRouter()
 
-# Include the count router 
-router.include_router(
-    count.router, 
-    prefix="/count", 
-    tags=["count"]
-)
+# Include routers from different modules
+router.include_router(health.router, prefix="/health", tags=["health"])
+router.include_router(projects.router, prefix="/projects", tags=["projects"])
 
-
-# Add health check endpoint
-@router.get("/health")
-async def health_check():
-    return {"status": "healthy"}
 
 # Add basic root endpoint
 @router.get("/")
