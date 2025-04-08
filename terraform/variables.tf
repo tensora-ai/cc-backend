@@ -23,3 +23,8 @@ variable "api_key" {
   description = "Valid API Key for authentication"
 }
 
+variable "log_level" {
+  type        = string
+  description = "Log level for the application"
+  default     = "INFO"
+}
