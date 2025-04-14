@@ -2,6 +2,7 @@ import numpy as np
 from fastapi import HTTPException, Depends
 from datetime import timedelta
 from typing import Dict, Optional
+from azure.cosmos import ContainerProxy
 
 from app.core.database import get_container
 from app.models.prediction import (
@@ -145,7 +146,9 @@ class PredictionService:
 
 
 async def get_prediction_service(
-    predictions_container=Depends(lambda: get_container("predictions")),
+    predictions_container: ContainerProxy = Depends(
+        lambda: get_container("predictions")
+    ),
     projects_container=Depends(lambda: get_container("projects")),
 ) -> PredictionService:
     """
@@ -159,8 +162,8 @@ async def get_prediction_service(
         Configured PredictionService instance
     """
     # Create repositories
-    prediction_repository = PredictionRepository(predictions_container)
-    project_repository = ProjectRepository(projects_container)
+    prediction_repository: ContainerProxy = PredictionRepository(predictions_container)
+    project_repository: ProjectRepository = ProjectRepository(projects_container)
 
     # Load camera mappings from projects
     camera_mappings = await project_repository.get_camera_mappings()

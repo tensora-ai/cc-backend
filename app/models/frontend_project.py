@@ -25,18 +25,23 @@ class GetFrontendProjectResponse(BaseModel):
             "example": {
                 "id": "eventcore-demo",
                 "name": "eventCORE Demo",
-                "areas": [
-                    {
-                        "name": "test_area",
-                        "half_moving_avg_size": 0,
+                "areas": {
+                    "test_area": {
+                        "name": "Test Area",
+                        "half_moving_avg_size": 10,
                         "camera_ids": [
                             {
-                                "name": "test_camera",
-                                "position": "standard",
+                                "name": "Camera 1",
+                                "position": "front",
+                                "use_heatmap": True,
+                            },
+                            {
+                                "name": "Camera 2",
+                                "position": "back",
                                 "use_heatmap": False,
-                            }
+                            },
                         ],
                     }
-                ],
+                },
             }
         }

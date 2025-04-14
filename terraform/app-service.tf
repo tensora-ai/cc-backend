@@ -1,6 +1,6 @@
 data "azurerm_storage_account" "count" {
-  name                     = "stcount${var.customer}${var.environment}"
-  resource_group_name      = "rg-count-${var.customer}-${var.environment}-storage"
+  name                = "stcount${var.customer}${var.environment}"
+  resource_group_name = "rg-count-${var.customer}-${var.environment}-storage"
 }
 
 resource "azurerm_container_registry" "count" {
@@ -69,7 +69,7 @@ resource "azurerm_linux_web_app" "count_backend" {
     WEBSITES_CONTAINER_START_LIMIT      = 1800
     WEBSITES_PORT                       = 8000
     API_KEY                             = var.api_key
-    LOG_LEVEL                         = var.log_level
+    LOG_LEVEL                           = var.log_level
     COSMOS_DB_ENDPOINT                  = azurerm_cosmosdb_account.count.endpoint
     COSMOS_DB_PRIMARY_KEY               = azurerm_cosmosdb_account.count.primary_key
     COSMOS_DB_DATABASE_NAME             = azurerm_cosmosdb_sql_database.count.name
