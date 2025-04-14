@@ -113,8 +113,12 @@ class PredictionService:
         # Step 5: Generate time grid from min to max date
         # Create a uniform time grid for evaluation (30-second intervals)
         time_grid = np.linspace(
-            (interpolation_result.min_date - start_dt).total_seconds(),
-            (interpolation_result.max_date - start_dt).total_seconds(),
+            (
+                interpolation_result.min_date.astimezone(start_dt.tzinfo) - start_dt
+            ).total_seconds(),
+            (
+                interpolation_result.max_date.astimezone(start_dt.tzinfo) - start_dt
+            ).total_seconds(),
             num=int(request.lookback_hours * 120),
         )
 

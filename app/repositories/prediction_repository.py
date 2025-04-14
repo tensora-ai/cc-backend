@@ -1,4 +1,3 @@
-import asyncio
 from azure.cosmos import ContainerProxy
 from typing import List
 from datetime import datetime
@@ -37,8 +36,8 @@ class PredictionRepository:
         start_date_str = start_date.strftime(DATETIME_FORMAT)
         end_date_str = end_date.strftime(DATETIME_FORMAT)
 
-        # Create async query tasks for each camera position
-        query_tasks = []
+        # Create empty result container
+        prediction_data_list = []
 
         for camera in camera_positions:
             # Create the query
@@ -51,17 +50,16 @@ class PredictionRepository:
             """
 
             # Add to tasks list
-            query_task = self._process_camera_query(
+            prediction_data = self._process_camera_query(
                 query, project_id, area_id, camera.camera_id, camera.position
             )
-            query_tasks.append(query_task)
 
-        # Execute all queries in parallel
-        results = await asyncio.gather(*query_tasks)
+            # Append the result to the list
+            prediction_data_list.append(prediction_data)
 
-        return results
+        return prediction_data_list
 
-    async def _process_camera_query(
+    def _process_camera_query(
         self, query: str, project_id: str, area_id: str, camera_id: str, position: str
     ) -> PredictionData:
         """
@@ -90,7 +88,7 @@ class PredictionRepository:
 
         # Process each result
 
-        async for prediction in query_results:
+        for prediction in query_results:
             try:
                 # Extract timestamp and count for the requested area
                 timestamp_str = prediction["timestamp"]

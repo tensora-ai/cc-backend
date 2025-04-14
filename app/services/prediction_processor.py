@@ -48,14 +48,14 @@ class PredictionProcessor:
         # Create interpolation functions for each camera
         interpolation_funcs = []
         source_ids = []
-        date_strings = []
+        dates = []
 
         for pred in predictions:
             # Create source ID for this camera
             source_ids.append(f"{project_id}-{pred.source_id}")
 
-            # Collect all date strings for min/max calculation
-            date_strings.extend(pred.dates)
+            # Collect all dates for min/max calculation
+            dates.extend(pred.dates)
 
             # Create interpolation function based on number of data points
             if len(pred.dates) == 1:
@@ -66,7 +66,8 @@ class PredictionProcessor:
             else:
                 # Calculate seconds elapsed since start_dt for each date
                 rescaled_dates = [
-                    (date - start_dt).total_seconds() for date in pred.dates
+                    (date.astimezone(start_dt.tzinfo) - start_dt).total_seconds()
+                    for date in pred.dates
                 ]
 
                 # Create linear interpolation function
@@ -80,8 +81,8 @@ class PredictionProcessor:
                 )
 
         # Find min and max dates across all predictions
-        min_date = datetime.strptime(min(date_strings), DATETIME_FORMAT)
-        max_date = datetime.strptime(max(date_strings), DATETIME_FORMAT)
+        min_date = min(dates)
+        max_date = max(dates)
 
         return InterpolationResult(
             interpolation_funcs=interpolation_funcs,

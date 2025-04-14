@@ -68,7 +68,7 @@ class PredictionData(BaseModel):
         """Get the datetime of the latest prediction."""
         if not self.has_data:
             raise ValueError("No prediction data available")
-        return datetime.strptime(self.dates[-1], "%Y-%m-%dT%H:%M:%SZ")
+        return self.dates[-1]
 
     @property
     def source_id(self) -> str:
@@ -119,7 +119,7 @@ class AggregateTimeSeriesRequest(BaseModel):
             "example": {
                 "project": "eventcore-demo",
                 "area": "test_area",
-                "end_date": "2025-01-01T12:00:00Z",
+                "end_date": "2025-03-05T10:00:00Z",
                 "lookback_hours": 3.0,
                 "half_moving_avg_size": 2,
             }

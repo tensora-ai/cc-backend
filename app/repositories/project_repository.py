@@ -20,9 +20,12 @@ class ProjectRepository:
         project_mappings = {}
 
         # Extract all project metadata with a single query
-        async for project in self.container.query_items(
-            query="SELECT c.id, c.cameras FROM c", enable_cross_partition_query=True
-        ):
+        query = "SELECT c.id, c.cameras FROM c"
+        query_results = self.container.query_items(
+            query=query, enable_cross_partition_query=True
+        )
+
+        for project in query_results:
             project_id = project["id"]
             areas_dict = {}
 
