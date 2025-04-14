@@ -41,7 +41,7 @@ class ImageRepository:
             blob_client = self.container_client.get_blob_client(image_name)
 
             # Get properties to determine content type
-            properties = await blob_client.get_blob_properties()
+            properties = blob_client.get_blob_properties()
             content_type = properties.content_settings.content_type
 
             # If content type is not set or is generic, infer from filename
@@ -49,8 +49,8 @@ class ImageRepository:
                 content_type = self._infer_content_type(image_name)
 
             # Download the blob
-            download_stream = await blob_client.download_blob()
-            blob_content = await self._stream_to_bytes(download_stream)
+            download_stream = blob_client.download_blob()
+            blob_content = download_stream.readall()
 
             return blob_content, content_type
 
@@ -63,19 +63,6 @@ class ImageRepository:
             raise HTTPException(
                 status_code=500, detail=f"Error retrieving image: {str(e)}"
             )
-
-    async def _stream_to_bytes(self, stream: StorageStreamDownloader) -> bytes:
-        """
-        Convert a blob stream to bytes.
-
-        Args:
-            stream: Azure storage stream downloader
-
-        Returns:
-            Bytes content of the stream
-        """
-        content = await stream.readall()
-        return content
 
     def _infer_content_type(self, filename: str) -> str:
         """
