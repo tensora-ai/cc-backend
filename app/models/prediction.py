@@ -115,7 +115,7 @@ class AggregateTimeSeriesRequest(BaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime(DATETIME_FORMAT)}
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "project": "eventcore-demo",
                 "area": "test_area",
@@ -148,7 +148,7 @@ class AggregateTimeSeriesResponse(BaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime(DATETIME_FORMAT)}
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "time_series": [
                     {"timestamp": "2025-01-01T12:00:00Z", "value": 42},

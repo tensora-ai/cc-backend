@@ -21,7 +21,7 @@ class GetFrontendProjectResponse(BaseModel):
 
     class Config:
         # Example for OpenAPI documentation
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "eventcore-demo",
                 "name": "eventCORE Demo",
