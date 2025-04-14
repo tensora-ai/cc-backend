@@ -4,7 +4,7 @@ from app.models.health import HealthCheckResponse
 router = APIRouter()
 
 
-@router.get("/", response_model=HealthCheckResponse)
+@router.get(response_model=HealthCheckResponse)
 async def get_health_status() -> HealthCheckResponse:
     """Retrieve the health status of the service.
 
