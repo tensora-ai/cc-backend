@@ -73,7 +73,7 @@ resource "azurerm_linux_web_app" "count_backend" {
     COSMOS_DB_ENDPOINT                  = azurerm_cosmosdb_account.count.endpoint
     COSMOS_DB_PRIMARY_KEY               = azurerm_cosmosdb_account.count.primary_key
     COSMOS_DB_DATABASE_NAME             = azurerm_cosmosdb_sql_database.count.name
-    BLOB_CONNECTION_STRING              = data.azurerm_storage_account.count.primary_blob_connection_string
+    AZURE_STORAGE_CONNECTION_STRING     = data.azurerm_storage_account.count.primary_blob_connection_string
   }
 
   lifecycle {
