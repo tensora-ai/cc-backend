@@ -1,0 +1,11 @@
+fastapi
+aiohttp
+uvicorn
+pydantic
+pydantic-settings
+azure-cosmos
+azure-storage-blob
+scipy
+python-dotenv
+pyclean
+
