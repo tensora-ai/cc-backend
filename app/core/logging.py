@@ -1,7 +1,5 @@
 import logging
-import os
-
-from config import settings
+from app.config import settings
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 

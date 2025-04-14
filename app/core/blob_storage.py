@@ -1,6 +1,5 @@
-from config import settings
+from app.config import settings
 from azure.storage.blob import BlobServiceClient
-import os
 
 
 def get_blob_service_client() -> BlobServiceClient:

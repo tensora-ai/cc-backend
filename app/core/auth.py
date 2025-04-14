@@ -1,11 +1,9 @@
-import os
-
 from fastapi import HTTPException
 from fastapi import Security
 from fastapi import status
 from fastapi.security import APIKeyHeader
 
-from config import settings
+from app.config import settings
 
 # Define the API key header
 # This will be used to extract the API key from the request headers

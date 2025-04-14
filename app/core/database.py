@@ -1,8 +1,6 @@
 from azure.cosmos import CosmosClient, DatabaseProxy, ContainerProxy
 from fastapi import Depends
-from config import settings
-
-import os
+from app.config import settings
 
 
 def get_cosmosdb_client() -> CosmosClient:
