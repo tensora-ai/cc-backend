@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import Response
 
 from app.services.image_service import ImageService, get_image_service
+from app.core.auth import validate_api_key
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(validate_api_key)])
 
 
 @router.get("/{image_name}")

@@ -55,9 +55,14 @@ class FrontendProjectService:
             )
 
 
+async def get_frontend_project_container():
+    """Get the container client for the frontend projects."""
+    return await get_container("frontend-projects")
+
+
 async def get_frontend_project_service(
     frontend_projects_container: ContainerProxy = Depends(
-        lambda: get_container("frontend-projects")
+        get_frontend_project_container
     ),
 ) -> FrontendProjectService:
     return FrontendProjectService(frontend_projects_container)

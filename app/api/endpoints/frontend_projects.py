@@ -4,8 +4,9 @@ from app.services.frontend_project_service import (
     FrontendProjectService,
     get_frontend_project_service,
 )
+from app.core.auth import validate_api_key
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(validate_api_key)])
 
 
 @router.get("/{frontend_project_id}", response_model=GetFrontendProjectResponse)

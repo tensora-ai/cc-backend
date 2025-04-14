@@ -4,8 +4,9 @@ from app.models.prediction import (
     AggregateTimeSeriesResponse,
 )
 from app.services.prediction_service import PredictionService, get_prediction_service
+from app.core.auth import validate_api_key
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(validate_api_key)])
 
 
 @router.post("/aggregate", response_model=AggregateTimeSeriesResponse)
