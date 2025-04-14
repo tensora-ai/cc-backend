@@ -15,7 +15,7 @@ def get_cosmosdb_client() -> CosmosClient:
     return cosmosdb_client
 
 
-def get_database(client: CosmosClient = Depends(get_cosmosdb_client)) -> DatabaseProxy:
+def get_database(client: CosmosClient = get_cosmosdb_client()) -> DatabaseProxy:
     """Get a CosmosDB database instance."""
     database_name = settings.COSMOS_DB_DATABASE_NAME
     database = client.get_database_client(database_name)
@@ -23,8 +23,8 @@ def get_database(client: CosmosClient = Depends(get_cosmosdb_client)) -> Databas
     return database
 
 
-async def get_container(
-    container_name: str, database: DatabaseProxy = Depends(get_database)
+def get_container(
+    container_name: str, database: DatabaseProxy = get_database()
 ) -> ContainerProxy:
     """Get a CosmosDB container instance."""
     container = database.get_container_client(container_name)

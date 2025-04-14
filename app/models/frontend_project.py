@@ -17,7 +17,7 @@ class Area(BaseModel):
 class GetFrontendProjectResponse(BaseModel):
     id: str
     name: str
-    areas: Dict[str, Area]
+    areas: List[Area]
 
     class Config:
         # Example for OpenAPI documentation
@@ -25,23 +25,34 @@ class GetFrontendProjectResponse(BaseModel):
             "example": {
                 "id": "eventcore-demo",
                 "name": "eventCORE Demo",
-                "areas": {
-                    "test_area": {
-                        "name": "Test Area",
+                "areas": [
+                    {
+                        "name": "Area 1",
                         "half_moving_avg_size": 10,
                         "camera_ids": [
                             {
                                 "name": "Camera 1",
-                                "position": "front",
+                                "position": "left",
                                 "use_heatmap": True,
                             },
                             {
                                 "name": "Camera 2",
-                                "position": "back",
+                                "position": "right",
                                 "use_heatmap": False,
                             },
                         ],
-                    }
-                },
+                    },
+                    {
+                        "name": "Area 2",
+                        "half_moving_avg_size": 20,
+                        "camera_ids": [
+                            {
+                                "name": "Camera 3",
+                                "position": "front",
+                                "use_heatmap": True,
+                            },
+                        ],
+                    },
+                ],
             }
         }
