@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
 
@@ -9,9 +9,7 @@ class HealthCheckResponse(BaseModel):
 
     status: str
     message: str
-    timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(datetime.timezone.utc)
-    )
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Config:
         json_schema_extra = {
