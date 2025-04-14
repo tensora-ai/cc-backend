@@ -1,5 +1,6 @@
 from azure.cosmos import CosmosClient, DatabaseProxy, ContainerProxy
 from fastapi import Depends
+from config import settings
 
 import os
 
@@ -7,8 +8,8 @@ import os
 def get_cosmosdb_client() -> CosmosClient:
     """Create and return a CosmosDB client."""
     # Get connection details from environment variables
-    endpoint = os.getenv("COSMOS_DB_ENDPOINT")
-    primary_key = os.getenv("COSMOS_DB_PRIMARY_KEY")
+    endpoint = settings.COSMOS_DB_ENDPOINT
+    primary_key = settings.COSMOS_DB_PRIMARY_KEY
 
     # Create Cosmos DB client
     cosmosdb_client = CosmosClient(endpoint, primary_key)
@@ -18,7 +19,7 @@ def get_cosmosdb_client() -> CosmosClient:
 
 def get_database(client: CosmosClient = Depends(get_cosmosdb_client)) -> DatabaseProxy:
     """Get a CosmosDB database instance."""
-    database_name = os.getenv("COSMOS_DB_DATABASE_NAME")
+    database_name = settings.COSMOS_DB_DATABASE_NAME
     database = client.get_database_client(database_name)
 
     return database
