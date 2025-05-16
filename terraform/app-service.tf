@@ -1,8 +1,3 @@
-data "azurerm_storage_account" "count" {
-  name                = "stcount${var.customer}${var.environment}"
-  resource_group_name = "rg-count-${var.customer}-${var.environment}-storage"
-}
-
 resource "azurerm_container_registry" "count" {
   name                = "acrcount${var.customer}${var.environment}"
   resource_group_name = "rg-count-${var.customer}-${var.environment}-operations"
