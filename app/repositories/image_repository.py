@@ -1,8 +1,5 @@
 from typing import Optional, Tuple
-from azure.storage.blob import (
-    BlobServiceClient,
-    StorageStreamDownloader,
-)
+from azure.storage.blob import BlobServiceClient
 from fastapi import HTTPException
 
 

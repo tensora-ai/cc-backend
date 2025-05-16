@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.interpolate import interp1d
 from fastapi import HTTPException
-from typing import List, Tuple, Callable
+from typing import List
 from datetime import datetime, timedelta
 
 from app.models.prediction import (
