@@ -2,6 +2,7 @@ from typing import List, Optional, Dict, Any
 from azure.cosmos import ContainerProxy
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
+from app.core.logging import get_logger
 from app.models.prediction import AreaMapping, CameraPosition, ProjectMapping
 
 
@@ -10,13 +11,17 @@ class ProjectRepository:
 
     def __init__(self, projects_container: ContainerProxy):
         self.container = projects_container
+        self.logger = get_logger(__name__)
 
     async def list_projects(self) -> List[Dict[str, Any]]:
         """List all projects as raw dictionaries."""
         query = "SELECT * FROM c"
-        items = await self.container.query_items(
+        items = self.container.query_items(
             query=query, enable_cross_partition_query=True
-        ).to_list()
+        )
+
+        items = list(items)
+        print(items)
 
         return items
 
