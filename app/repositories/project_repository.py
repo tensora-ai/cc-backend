@@ -61,40 +61,46 @@ class ProjectRepository:
 
     async def get_camera_mappings(self) -> Dict[str, ProjectMapping]:
         """
-        Extract project metadata and create structured mappings.
+        Extract project metadata and create structured mappings from the new project structure.
 
         Returns:
             Dict mapping project_id -> ProjectMapping objects
         """
         project_mappings = {}
 
-        # Extract all project metadata with a single query
-        query = "SELECT c.id, c.cameras FROM c"
-        query_results = await self.container.query_items(
+        # Extract all project data
+        query = "SELECT * FROM c"
+        query_results_paged = self.container.query_items(
             query=query, enable_cross_partition_query=True
-        ).to_list()
+        )
 
-        for project in query_results:
-            project_id = project["id"]
+        # Convert to list by iterating
+        query_results = list(query_results_paged)
+
+        for project_data in query_results:
+            project_id = project_data["id"]
             areas_dict = {}
 
-            # Process each camera in the project
-            for camera_id, camera_data in project.get("cameras", {}).items():
-                # Process each position for this camera
-                for position, position_data in camera_data.get(
-                    "position_settings", {}
-                ).items():
-                    # Process each area that this camera position covers
-                    for area_id in position_data.get("area_metadata", {}).keys():
-                        # Create or update the area mapping
-                        if area_id not in areas_dict:
-                            areas_dict[area_id] = AreaMapping(
-                                area_id=area_id, cameras=[]
-                            )
+            # Extract areas and camera configs from the new structure
+            for area in project_data.get("areas", []):
+                area_id = area.get("id")
+                if not area_id:
+                    continue  # Skip areas without ID
 
+                # Initialize area mapping
+                if area_id not in areas_dict:
+                    areas_dict[area_id] = AreaMapping(area_id=area_id, cameras=[])
+
+                # Process camera configurations for this area
+                for camera_config in area.get("camera_configs", []):
+                    camera_id = camera_config.get("camera_id")
+                    position_data = camera_config.get("position", {})
+                    position_name = position_data.get("name")
+
+                    if camera_id and position_name:
                         # Add this camera position to the area
                         areas_dict[area_id].cameras.append(
-                            CameraPosition(camera_id=camera_id, position=position)
+                            CameraPosition(camera_id=camera_id, position=position_name)
                         )
 
             # Create the project mapping
