@@ -20,10 +20,7 @@ class ProjectRepository:
             query=query, enable_cross_partition_query=True
         )
 
-        items = list(items)
-        print(items)
-
-        return items
+        return list(items)
 
     async def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
         """Get a project by ID as a raw dictionary."""
