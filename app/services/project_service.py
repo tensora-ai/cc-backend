@@ -13,22 +13,22 @@ class ProjectService:
     def __init__(self, project_repository: ProjectRepository):
         self.repository = project_repository
 
-    async def list_projects(self) -> List[Project]:
+    def list_projects(self) -> List[Project]:
         """List all projects."""
-        items = await self.repository.list_projects()
+        items = self.repository.list_projects()
         return [Project.model_validate(item) for item in items]
 
-    async def get_project(self, project_id: str) -> Optional[Project]:
+    def get_project(self, project_id: str) -> Optional[Project]:
         """Get a project by ID."""
-        item = await self.repository.get_project(project_id)
+        item = self.repository.get_project(project_id)
         if not item:
             return None
         return Project.model_validate(item)
 
-    async def create_project(self, project_data: ProjectCreate) -> Project:
+    def create_project(self, project_data: ProjectCreate) -> Project:
         """Create a new project."""
         # Check if project already exists
-        existing_project = await self.get_project(project_data.id)
+        existing_project = self.get_project(project_data.id)
         if existing_project:
             raise ValueError(f"Project with ID {project_data.id} already exists")
 
@@ -36,20 +36,20 @@ class ProjectService:
         new_project = Project(id=project_data.id, name=project_data.name)
 
         # Create in database
-        created_item = await self.repository.create_project(new_project.model_dump())
+        created_item = self.repository.create_project(new_project.model_dump())
 
         # Return the created project
         return Project.model_validate(created_item)
 
-    async def delete_project(self, project_id: str) -> bool:
+    def delete_project(self, project_id: str) -> bool:
         """Delete a project."""
-        return await self.repository.delete_project(project_id)
+        return self.repository.delete_project(project_id)
 
     # Camera operations
-    async def add_camera(self, project_id: str, camera_data: Camera) -> Project:
+    def add_camera(self, project_id: str, camera_data: Camera) -> Project:
         """Add a camera to a project."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -61,19 +61,17 @@ class ProjectService:
         project.cameras.append(camera_data)
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)
 
-    async def update_camera(
+    def update_camera(
         self, project_id: str, camera_id: str, camera_data: Dict[str, Any]
     ) -> Project:
         """Update a camera in a project."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -98,17 +96,15 @@ class ProjectService:
         project.cameras[camera_index] = Camera.model_validate(camera_dict)
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)
 
-    async def delete_camera(self, project_id: str, camera_id: str) -> Project:
+    def delete_camera(self, project_id: str, camera_id: str) -> Project:
         """Delete a camera from a project and remove any configurations using it."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -126,18 +122,16 @@ class ProjectService:
             ]
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)
 
     # Area operations
-    async def add_area(self, project_id: str, area_data: Area) -> Project:
+    def add_area(self, project_id: str, area_data: Area) -> Project:
         """Add an area to a project."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -149,19 +143,17 @@ class ProjectService:
         project.areas.append(area_data)
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)
 
-    async def update_area(
+    def update_area(
         self, project_id: str, area_id: str, area_data: Dict[str, Any]
     ) -> Project:
         """Update an area in a project."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -186,17 +178,15 @@ class ProjectService:
         project.areas[area_index] = Area.model_validate(area_dict)
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)
 
-    async def delete_area(self, project_id: str, area_id: str) -> Project:
+    def delete_area(self, project_id: str, area_id: str) -> Project:
         """Delete an area from a project."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -208,20 +198,18 @@ class ProjectService:
         project.areas = [a for a in project.areas if a.id != area_id]
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)
 
     # Camera configuration operations
-    async def add_camera_config(
+    def add_camera_config(
         self, project_id: str, area_id: str, config_data: Dict[str, Any]
     ) -> Project:
         """Add a camera configuration to an area."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -234,6 +222,15 @@ class ProjectService:
 
         if area_index is None:
             raise ValueError(f"Area with ID {area_id} not found in project")
+
+        # Check if camera config with same ID already exists
+        if any(
+            c.id == config_data.get("id")
+            for c in project.areas[area_index].camera_configs
+        ):
+            raise ValueError(
+                f"Camera Config with ID {config_data.get("id")} already exists in this area"
+            )
 
         # Get camera ID from the config data
         camera_id = config_data.get("camera_id")
@@ -269,24 +266,21 @@ class ProjectService:
         project.areas[area_index].camera_configs.append(camera_config)
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)
 
-    async def update_camera_config(
+    def update_camera_config(
         self,
         project_id: str,
         area_id: str,
-        camera_id: str,
-        original_position: str,
+        camera_config_id: str,
         config_data: Dict[str, Any],
     ) -> Project:
         """Update a camera configuration in an area."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -303,30 +297,14 @@ class ProjectService:
         # Find the camera config
         config_index = None
         for i, cc in enumerate(project.areas[area_index].camera_configs):
-            if cc.camera_id == camera_id and cc.position.name == original_position:
+            if cc.id == camera_config_id:
                 config_index = i
                 break
 
         if config_index is None:
             raise ValueError(
-                f"Camera configuration not found for camera {camera_id} with position {original_position}"
+                f"Camera configuration with ID {camera_config_id} not found in area {area_id}"
             )
-
-        # Check for position name change and potential conflicts
-        new_position = config_data.get("position", {})
-        new_position_name = new_position.get("name", original_position)
-
-        if original_position != new_position_name:
-            # If position name changed, check if it conflicts with an existing config
-            for cc in project.areas[area_index].camera_configs:
-                if (
-                    cc.camera_id == camera_id
-                    and cc.position.name == new_position_name
-                    and project.areas[area_index].camera_configs[config_index] != cc
-                ):
-                    raise ValueError(
-                        f"Camera {camera_id} is already configured in position {new_position_name}"
-                    )
 
         # Get the existing config
         camera_config = project.areas[area_index].camera_configs[config_index]
@@ -335,25 +313,26 @@ class ProjectService:
         config_dict = camera_config.model_dump()
         config_dict.update(config_data)
 
+        # Preserve the camera config ID
+        config_dict["id"] = camera_config_id
+
         # Replace the config in the list
         project.areas[area_index].camera_configs[config_index] = (
             CameraConfig.model_validate(config_dict)
         )
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)
 
-    async def delete_camera_config(
-        self, project_id: str, area_id: str, camera_id: str, position_name: str
+    def delete_camera_config(
+        self, project_id: str, area_id: str, camera_config_id: str
     ) -> Project:
         """Delete a camera configuration from an area."""
         # Get the project
-        project = await self.get_project(project_id)
+        project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID {project_id} not found")
 
@@ -365,28 +344,25 @@ class ProjectService:
                 break
 
         if area_index is None:
-            raise ValueError(f"Area with ID {area_id} not found in project")
+            raise ValueError(f"Area {area_id} not found in project")
 
         # Check if the camera config exists
         if not any(
-            cc.camera_id == camera_id and cc.position.name == position_name
-            for cc in project.areas[area_index].camera_configs
+            cc.id == camera_config_id for cc in project.areas[area_index].camera_configs
         ):
             raise ValueError(
-                f"Camera configuration not found for camera {camera_id} with position {position_name}"
+                f"Camera configuration {camera_config_id} not found in area {area_id}"
             )
 
         # Filter out the camera config
         project.areas[area_index].camera_configs = [
             cc
             for cc in project.areas[area_index].camera_configs
-            if not (cc.camera_id == camera_id and cc.position.name == position_name)
+            if not (cc.id == camera_config_id)
         ]
 
         # Update project in database
-        updated_item = await self.repository.update_project(
-            project_id, project.model_dump()
-        )
+        updated_item = self.repository.update_project(project_id, project.model_dump())
 
         # Return updated project
         return Project.model_validate(updated_item)

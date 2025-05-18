@@ -21,14 +21,14 @@ router = APIRouter(dependencies=[Depends(validate_api_key)])
 
 # Project endpoints
 @router.get("", response_model=ProjectList)
-async def list_projects(
+def list_projects(
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectList:
     """
     List all projects.
     """
     try:
-        projects = await service.list_projects()
+        projects = service.list_projects()
         return ProjectList(projects=projects)
     except Exception as e:
         raise HTTPException(
@@ -37,14 +37,14 @@ async def list_projects(
 
 
 @router.get("/{project_id}", response_model=Project)
-async def get_project(
+def get_project(
     project_id: str, service: ProjectService = Depends(get_project_service)
 ) -> Project:
     """
     Get a project by ID.
     """
     try:
-        project = await service.get_project(project_id)
+        project = service.get_project(project_id)
         if not project:
             raise HTTPException(
                 status_code=404, detail=f"Project with ID {project_id} not found"
@@ -57,14 +57,14 @@ async def get_project(
 
 
 @router.post("", response_model=Project)
-async def create_project(
+def create_project(
     project: ProjectCreate, service: ProjectService = Depends(get_project_service)
 ) -> Project:
     """
     Create a new project.
     """
     try:
-        created_project = await service.create_project(project)
+        created_project = service.create_project(project)
         return created_project
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -75,14 +75,14 @@ async def create_project(
 
 
 @router.delete("/{project_id}", response_model=bool)
-async def delete_project(
+def delete_project(
     project_id: str, service: ProjectService = Depends(get_project_service)
 ) -> bool:
     """
     Delete a project.
     """
     try:
-        success = await service.delete_project(project_id)
+        success = service.delete_project(project_id)
         if not success:
             raise HTTPException(
                 status_code=404, detail=f"Project with ID {project_id} not found"
@@ -98,7 +98,7 @@ async def delete_project(
 
 # Camera endpoints
 @router.post("/{project_id}/cameras", response_model=Project)
-async def add_camera(
+def add_camera(
     project_id: str,
     camera: CameraCreate,
     service: ProjectService = Depends(get_project_service),
@@ -109,7 +109,7 @@ async def add_camera(
     try:
         # Convert to Camera model
         camera_model = Camera(**camera.model_dump())
-        updated_project = await service.add_camera(project_id, camera_model)
+        updated_project = service.add_camera(project_id, camera_model)
         return updated_project
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -118,7 +118,7 @@ async def add_camera(
 
 
 @router.put("/{project_id}/cameras/{camera_id}", response_model=Project)
-async def update_camera(
+def update_camera(
     project_id: str,
     camera_id: str,
     camera: CameraUpdate,
@@ -128,7 +128,7 @@ async def update_camera(
     Update a camera in a project.
     """
     try:
-        updated_project = await service.update_camera(
+        updated_project = service.update_camera(
             project_id, camera_id, camera.model_dump()
         )
         return updated_project
@@ -143,7 +143,7 @@ async def update_camera(
 
 
 @router.delete("/{project_id}/cameras/{camera_id}", response_model=Project)
-async def delete_camera(
+def delete_camera(
     project_id: str,
     camera_id: str,
     service: ProjectService = Depends(get_project_service),
@@ -152,7 +152,7 @@ async def delete_camera(
     Delete a camera from a project.
     """
     try:
-        updated_project = await service.delete_camera(project_id, camera_id)
+        updated_project = service.delete_camera(project_id, camera_id)
         return updated_project
     except ValueError as e:
         if "not found" in str(e):
@@ -166,7 +166,7 @@ async def delete_camera(
 
 # Area endpoints
 @router.post("/{project_id}/areas", response_model=Project)
-async def add_area(
+def add_area(
     project_id: str,
     area: AreaCreate,
     service: ProjectService = Depends(get_project_service),
@@ -177,7 +177,7 @@ async def add_area(
     try:
         # Convert to Area model
         area_model = Area(id=area.id, name=area.name)
-        updated_project = await service.add_area(project_id, area_model)
+        updated_project = service.add_area(project_id, area_model)
         return updated_project
     except ValueError as e:
         if "not found" in str(e):
@@ -188,7 +188,7 @@ async def add_area(
 
 
 @router.put("/{project_id}/areas/{area_id}", response_model=Project)
-async def update_area(
+def update_area(
     project_id: str,
     area_id: str,
     area: AreaUpdate,
@@ -198,9 +198,7 @@ async def update_area(
     Update an area in a project.
     """
     try:
-        updated_project = await service.update_area(
-            project_id, area_id, area.model_dump()
-        )
+        updated_project = service.update_area(project_id, area_id, area.model_dump())
         return updated_project
     except ValueError as e:
         if "not found" in str(e):
@@ -211,7 +209,7 @@ async def update_area(
 
 
 @router.delete("/{project_id}/areas/{area_id}", response_model=Project)
-async def delete_area(
+def delete_area(
     project_id: str,
     area_id: str,
     service: ProjectService = Depends(get_project_service),
@@ -220,7 +218,7 @@ async def delete_area(
     Delete an area from a project.
     """
     try:
-        updated_project = await service.delete_area(project_id, area_id)
+        updated_project = service.delete_area(project_id, area_id)
         return updated_project
     except ValueError as e:
         if "not found" in str(e):
@@ -232,7 +230,7 @@ async def delete_area(
 
 # Camera configuration endpoints
 @router.post("/{project_id}/areas/{area_id}/camera-configs", response_model=Project)
-async def add_camera_config(
+def add_camera_config(
     project_id: str,
     area_id: str,
     config: CameraConfigCreate,
@@ -242,7 +240,7 @@ async def add_camera_config(
     Add a camera configuration to an area.
     """
     try:
-        updated_project = await service.add_camera_config(
+        updated_project = service.add_camera_config(
             project_id, area_id, config.model_dump()
         )
         return updated_project
@@ -257,14 +255,13 @@ async def add_camera_config(
 
 
 @router.put(
-    "/{project_id}/areas/{area_id}/camera-configs/{camera_id}/{position}",
+    "/{project_id}/areas/{area_id}/camera-configs/{camera_config_id}",
     response_model=Project,
 )
-async def update_camera_config(
+def update_camera_config(
     project_id: str,
     area_id: str,
-    camera_id: str,
-    position: str,
+    camera_config_id: str,
     config: CameraConfigUpdate,
     service: ProjectService = Depends(get_project_service),
 ) -> Project:
@@ -272,8 +269,8 @@ async def update_camera_config(
     Update a camera configuration in an area.
     """
     try:
-        updated_project = await service.update_camera_config(
-            project_id, area_id, camera_id, position, config.model_dump()
+        updated_project = service.update_camera_config(
+            project_id, area_id, camera_config_id, config.model_dump()
         )
         return updated_project
     except ValueError as e:
@@ -287,22 +284,21 @@ async def update_camera_config(
 
 
 @router.delete(
-    "/{project_id}/areas/{area_id}/camera-configs/{camera_id}/{position}",
+    "/{project_id}/areas/{area_id}/camera-configs/{camera_config_id}",
     response_model=Project,
 )
-async def delete_camera_config(
+def delete_camera_config(
     project_id: str,
     area_id: str,
-    camera_id: str,
-    position: str,
+    camera_config_id: str,
     service: ProjectService = Depends(get_project_service),
 ) -> Project:
     """
     Delete a camera configuration from an area.
     """
     try:
-        updated_project = await service.delete_camera_config(
-            project_id, area_id, camera_id, position
+        updated_project = service.delete_camera_config(
+            project_id, area_id, camera_config_id
         )
         return updated_project
     except ValueError as e:

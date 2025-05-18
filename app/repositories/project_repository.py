@@ -13,7 +13,7 @@ class ProjectRepository:
         self.container = projects_container
         self.logger = get_logger(__name__)
 
-    async def list_projects(self) -> List[Dict[str, Any]]:
+    def list_projects(self) -> List[Dict[str, Any]]:
         """List all projects as raw dictionaries."""
         query = "SELECT * FROM c"
         items = self.container.query_items(
@@ -22,28 +22,26 @@ class ProjectRepository:
 
         return list(items)
 
-    async def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
+    def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
         """Get a project by ID as a raw dictionary."""
         try:
-            item = await self.container.read_item(
-                item=project_id, partition_key=project_id
-            )
+            item = self.container.read_item(item=project_id, partition_key=project_id)
             return item
         except CosmosResourceNotFoundError:
             return None
 
-    async def create_project(self, project_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_project(self, project_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new project."""
-        created_item = await self.container.create_item(body=project_data)
+        created_item = self.container.create_item(body=project_data)
         return created_item
 
-    async def update_project(
+    def update_project(
         self, project_id: str, project_data: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """Update a project."""
         try:
             # Replace the entire document
-            updated_item = await self.container.replace_item(
+            updated_item = self.container.replace_item(
                 item=project_id, body=project_data
             )
 
@@ -51,15 +49,15 @@ class ProjectRepository:
         except CosmosResourceNotFoundError:
             return None
 
-    async def delete_project(self, project_id: str) -> bool:
+    def delete_project(self, project_id: str) -> bool:
         """Delete a project."""
         try:
-            await self.container.delete_item(item=project_id, partition_key=project_id)
+            self.container.delete_item(item=project_id, partition_key=project_id)
             return True
         except CosmosResourceNotFoundError:
             return False
 
-    async def get_camera_mappings(self) -> Dict[str, ProjectMapping]:
+    def get_camera_mappings(self) -> Dict[str, ProjectMapping]:
         """
         Extract project metadata and create structured mappings from the new project structure.
 

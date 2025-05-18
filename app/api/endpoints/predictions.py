@@ -10,7 +10,7 @@ router = APIRouter(dependencies=[Depends(validate_api_key)])
 
 
 @router.post("/aggregate", response_model=AggregateTimeSeriesResponse)
-async def aggregate_time_series(
+def aggregate_time_series(
     request: AggregateTimeSeriesRequest,
     prediction_service: PredictionService = Depends(get_prediction_service),
 ) -> AggregateTimeSeriesResponse:
@@ -27,4 +27,4 @@ async def aggregate_time_series(
     Returns:
         Aggregated predictions with timestamps
     """
-    return await prediction_service.aggregate_time_series(request)
+    return prediction_service.aggregate_time_series(request)

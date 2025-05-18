@@ -2,7 +2,7 @@ from datetime import time
 from enum import Enum
 from typing import List, Optional, Tuple
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, Field
 
 
 class CountingModel(str, Enum):
@@ -44,10 +44,10 @@ class Camera(BaseModel):
     id: str
     name: str
     resolution: Tuple[int, int]
-    sensor_size: Optional[Tuple[float, float]] = None
-    coordinates_3d: Optional[Tuple[float, float, float]] = None
+    sensor_size: Optional[Tuple[float, float]] = Field(default_factory=list)
+    coordinates_3d: Optional[Tuple[float, float, float]] = Field(default_factory=list)
     default_model: Optional[CountingModel] = CountingModel.STANDARD
-    model_schedules: List[ModelSchedule] = []
+    model_schedules: List[ModelSchedule] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_no_schedule_overlap(self) -> "Camera":
@@ -118,35 +118,37 @@ class Camera(BaseModel):
 
 class Position(BaseModel):
     name: str
-    center_ground_plane: Optional[Tuple[float, float]] = None
+    center_ground_plane: Optional[Tuple[float, float]] = Field(default_factory=list)
     focal_length: Optional[float] = None
 
 
 class MaskingConfig(BaseModel):
-    edges: List[Tuple[int, int]]
+    edges: List[Tuple[int, int]] = Field(default_factory=list)
 
 
 class CameraConfig(BaseModel):
+    id: str
+    name: str
     camera_id: str
     position: Position
     enable_heatmap: bool
-    heatmap_config: Optional[Tuple[int, int, int, int]] = None
+    heatmap_config: Optional[Tuple[int, int, int, int]] = Field(default_factory=list)
     enable_interpolation: bool
     enable_masking: bool
-    masking_config: Optional[MaskingConfig] = None
+    masking_config: Optional[MaskingConfig] = Field(default_factory=dict)
 
 
 class Area(BaseModel):
     id: str
     name: str
-    camera_configs: List[CameraConfig]
+    camera_configs: List[CameraConfig] = Field(default_factory=list)
 
 
 class Project(BaseModel):
     id: str
     name: str
-    cameras: List[Camera]
-    areas: List[Area]
+    cameras: List[Camera] = Field(default_factory=list)
+    areas: List[Area] = Field(default_factory=list)
 
 
 # Request / Response Models
@@ -163,19 +165,19 @@ class CameraCreate(BaseModel):
     id: str
     name: str
     resolution: Tuple[int, int]
-    sensor_size: Optional[Tuple[float, float]] = None
-    coordinates_3d: Optional[Tuple[float, float, float]] = None
+    sensor_size: Optional[Tuple[float, float]] = Field(default_factory=list)
+    coordinates_3d: Optional[Tuple[float, float, float]] = Field(default_factory=list)
     default_model: Optional[CountingModel] = CountingModel.STANDARD
-    model_schedules: List[ModelSchedule] = []
+    model_schedules: List[ModelSchedule] = Field(default_factory=list)
 
 
 class CameraUpdate(BaseModel):
     name: str
     resolution: Tuple[int, int]
-    sensor_size: Optional[Tuple[float, float]] = None
-    coordinates_3d: Optional[Tuple[float, float, float]] = None
+    sensor_size: Optional[Tuple[float, float]] = Field(default_factory=list)
+    coordinates_3d: Optional[Tuple[float, float, float]] = Field(default_factory=list)
     default_model: Optional[CountingModel] = CountingModel.STANDARD
-    model_schedules: List[ModelSchedule] = []
+    model_schedules: List[ModelSchedule] = Field(default_factory=list)
 
 
 class AreaCreate(BaseModel):
@@ -188,33 +190,23 @@ class AreaUpdate(BaseModel):
 
 
 class CameraConfigCreate(BaseModel):
+    id: str
+    name: str
+    camera_id: str
+    position: Position
+    enable_heatmap: bool
+    heatmap_config: Optional[Tuple[int, int, int, int]] = Field(default_factory=list)
+    enable_interpolation: bool
+    enable_masking: bool
+    masking_config: Optional[MaskingConfig] = Field(default_factory=dict)
+
+
+class CameraConfigUpdate(BaseModel):
+    name: str
     camera_id: str
     position: Position
     enable_heatmap: bool
     heatmap_config: Optional[Tuple[int, int, int, int]] = None
     enable_interpolation: bool
     enable_masking: bool
-    masking_edges: Optional[List[Tuple[int, int]]] = None
-
-    @model_validator(mode="after")
-    def transform_masking_edges(self) -> "CameraConfigCreate":
-        """Transform masking edges to masking config if needed"""
-        if self.enable_masking and self.masking_edges:
-            self.masking_config = MaskingConfig(edges=self.masking_edges)
-        return self
-
-
-class CameraConfigUpdate(BaseModel):
-    position: Position
-    enable_heatmap: bool
-    heatmap_config: Optional[Tuple[int, int, int, int]] = None
-    enable_interpolation: bool
-    enable_masking: bool
-    masking_edges: Optional[List[Tuple[int, int]]] = None
-
-    @model_validator(mode="after")
-    def transform_masking_edges(self) -> "CameraConfigUpdate":
-        """Transform masking edges to masking config if needed"""
-        if self.enable_masking and self.masking_edges:
-            self.masking_config = MaskingConfig(edges=self.masking_edges)
-        return self
+    masking_config: Optional[MaskingConfig] = Field(default_factory=dict)

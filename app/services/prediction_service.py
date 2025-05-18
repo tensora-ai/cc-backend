@@ -58,7 +58,7 @@ class PredictionService:
 
         return project.get_area(area_id)
 
-    async def aggregate_time_series(
+    def aggregate_time_series(
         self, request: AggregateTimeSeriesRequest
     ) -> AggregateTimeSeriesResponse:
         """
@@ -101,7 +101,7 @@ class PredictionService:
         start_dt = end_dt - timedelta(hours=request.lookback_hours)
 
         # Step 3: Get prediction data for all cameras in the area
-        predictions = await self.prediction_repo.get_predictions_for_area(
+        predictions = self.prediction_repo.get_predictions_for_area(
             request.project, request.area, area.cameras, start_dt, end_dt
         )
 
@@ -149,7 +149,7 @@ class PredictionService:
         )
 
 
-async def get_prediction_service(
+def get_prediction_service(
     predictions_container: ContainerProxy = Depends(
         lambda: get_container("predictions")
     ),
@@ -170,7 +170,7 @@ async def get_prediction_service(
     project_repository: ProjectRepository = ProjectRepository(projects_container)
 
     # Load camera mappings from projects
-    camera_mappings = await project_repository.get_camera_mappings()
+    camera_mappings = project_repository.get_camera_mappings()
 
     # Create and return service
     return PredictionService(prediction_repository, camera_mappings)

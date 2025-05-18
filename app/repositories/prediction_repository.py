@@ -11,7 +11,7 @@ class PredictionRepository:
     def __init__(self, predictions_container: ContainerProxy):
         self.container = predictions_container
 
-    async def get_predictions_for_area(
+    def get_predictions_for_area(
         self,
         project_id: str,
         area_id: str,
