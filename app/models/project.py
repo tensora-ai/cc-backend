@@ -44,8 +44,8 @@ class Camera(BaseModel):
     id: str
     name: str
     resolution: Tuple[int, int]
-    sensor_size: Optional[Tuple[float, float]] = Field(default_factory=list)
-    coordinates_3d: Optional[Tuple[float, float, float]] = Field(default_factory=list)
+    sensor_size: Optional[Tuple[float, float]] = None
+    coordinates_3d: Optional[Tuple[float, float, float]] = None
     default_model: Optional[CountingModel] = CountingModel.STANDARD
     model_schedules: List[ModelSchedule] = Field(default_factory=list)
 
@@ -118,7 +118,7 @@ class Camera(BaseModel):
 
 class Position(BaseModel):
     name: str
-    center_ground_plane: Optional[Tuple[float, float]] = Field(default_factory=list)
+    center_ground_plane: Optional[Tuple[float, float]] = None
     focal_length: Optional[float] = None
 
 
@@ -132,10 +132,10 @@ class CameraConfig(BaseModel):
     camera_id: str
     position: Position
     enable_heatmap: bool
-    heatmap_config: Optional[Tuple[int, int, int, int]] = Field(default_factory=list)
+    heatmap_config: Optional[Tuple[int, int, int, int]] = None
     enable_interpolation: bool
     enable_masking: bool
-    masking_config: Optional[MaskingConfig] = Field(default_factory=dict)
+    masking_config: Optional[MaskingConfig] = None
 
 
 class Area(BaseModel):
@@ -165,8 +165,8 @@ class CameraCreate(BaseModel):
     id: str
     name: str
     resolution: Tuple[int, int]
-    sensor_size: Optional[Tuple[float, float]] = Field(default_factory=list)
-    coordinates_3d: Optional[Tuple[float, float, float]] = Field(default_factory=list)
+    sensor_size: Optional[Tuple[float, float]] = None
+    coordinates_3d: Optional[Tuple[float, float, float]] = None
     default_model: Optional[CountingModel] = CountingModel.STANDARD
     model_schedules: List[ModelSchedule] = Field(default_factory=list)
 
@@ -174,8 +174,8 @@ class CameraCreate(BaseModel):
 class CameraUpdate(BaseModel):
     name: str
     resolution: Tuple[int, int]
-    sensor_size: Optional[Tuple[float, float]] = Field(default_factory=list)
-    coordinates_3d: Optional[Tuple[float, float, float]] = Field(default_factory=list)
+    sensor_size: Optional[Tuple[float, float]] = None
+    coordinates_3d: Optional[Tuple[float, float, float]] = None
     default_model: Optional[CountingModel] = CountingModel.STANDARD
     model_schedules: List[ModelSchedule] = Field(default_factory=list)
 
@@ -195,10 +195,10 @@ class CameraConfigCreate(BaseModel):
     camera_id: str
     position: Position
     enable_heatmap: bool
-    heatmap_config: Optional[Tuple[int, int, int, int]] = Field(default_factory=list)
+    heatmap_config: Optional[Tuple[int, int, int, int]] = None
     enable_interpolation: bool
     enable_masking: bool
-    masking_config: Optional[MaskingConfig] = Field(default_factory=dict)
+    masking_config: Optional[MaskingConfig] = None
 
 
 class CameraConfigUpdate(BaseModel):
@@ -209,4 +209,4 @@ class CameraConfigUpdate(BaseModel):
     heatmap_config: Optional[Tuple[int, int, int, int]] = None
     enable_interpolation: bool
     enable_masking: bool
-    masking_config: Optional[MaskingConfig] = Field(default_factory=dict)
+    masking_config: Optional[MaskingConfig] = None
