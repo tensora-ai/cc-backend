@@ -352,7 +352,7 @@ def aggregate_time_series(
     return prediction_service.aggregate_time_series(project_id, area_id, request)
 
 
-@router.get("/{project_id}/areas/{area_id}/predictions/nearest-camera-image")
+@router.get("/{project_id}/areas/{area_id}/nearest-camera-image")
 async def get_nearest_camera_image(
     project_id: str,
     area_id: str,
@@ -409,7 +409,7 @@ async def get_nearest_camera_image(
         )
 
 
-@router.get("/{project_id}/areas/{area_id}/predictions/nearest-heatmap")
+@router.get("/{project_id}/areas/{area_id}/nearest-heatmap")
 async def get_nearest_heatmap(
     project_id: str,
     area_id: str,
@@ -467,7 +467,7 @@ async def get_nearest_heatmap(
 
 
 @router.get(
-    "/{project_id}/areas/{area_id}/predictions/nearest-density",
+    "/{project_id}/areas/{area_id}/nearest-density",
     response_model=DensityResponse,
 )
 async def get_nearest_density(
