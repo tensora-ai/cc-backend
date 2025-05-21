@@ -1,6 +1,8 @@
 from datetime import datetime
+import json
 from fastapi import APIRouter, Depends, HTTPException, Response
 
+from app.models.blob_storage import ContainerName
 from app.models.prediction import (
     AggregateTimeSeriesRequest,
     AggregateTimeSeriesResponse,
@@ -351,7 +353,7 @@ def aggregate_time_series(
 
 
 @router.get("/{project_id}/areas/{area_id}/predictions/nearest-camera-image")
-def get_nearest_camera_image(
+async def get_nearest_camera_image(
     project_id: str,
     area_id: str,
     camera_id: str,
@@ -372,11 +374,43 @@ def get_nearest_camera_image(
     Returns:
         Bytes of the nearest camera image
     """
-    pass  # Placeholder for actual implementation
+    try:
+        # Build the blob name prefix
+        blob_prefix = f"{project_id}-{camera_id}-{position_id}"
+
+        # Find the nearest camera image blob
+        nearest_blob_name, nearest_timestamp = (
+            await blob_storage_service.find_nearest_blob(
+                ContainerName.IMAGES, blob_prefix, timestamp, "_small.jpg"
+            )
+        )
+
+        # Get the blob content
+        blob_bytes, content_type = await blob_storage_service.get_blob(
+            ContainerName.IMAGES, nearest_blob_name
+        )
+
+        # Return the image as a response with the correct content type
+        return Response(
+            content=blob_bytes,
+            media_type=content_type,
+            headers={
+                "X-Nearest-Timestamp": nearest_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "Content-Disposition": f'inline; filename="{nearest_blob_name}"',
+            },
+        )
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
+    except Exception as e:
+        # Handle other errors
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve nearest camera image: {str(e)}"
+        )
 
 
 @router.get("/{project_id}/areas/{area_id}/predictions/nearest-heatmap")
-def get_nearest_heatmap(
+async def get_nearest_heatmap(
     project_id: str,
     area_id: str,
     camera_id: str,
@@ -397,11 +431,46 @@ def get_nearest_heatmap(
     Returns:
         Bytes of the nearest heatmap
     """
-    pass  # Placeholder for actual implementation
+    try:
+        # Build the blob name prefix
+        blob_prefix = f"{project_id}-{camera_id}-{position_id}"
+
+        # Find the nearest heatmap blob
+        nearest_blob_name, nearest_timestamp = (
+            await blob_storage_service.find_nearest_blob(
+                ContainerName.IMAGES, blob_prefix, timestamp, "_heatmap.jpg"
+            )
+        )
+
+        # Get the blob content
+        blob_bytes, content_type = await blob_storage_service.get_blob(
+            ContainerName.IMAGES, nearest_blob_name
+        )
+
+        # Return the image as a response with the correct content type
+        return Response(
+            content=blob_bytes,
+            media_type=content_type,
+            headers={
+                "X-Nearest-Timestamp": nearest_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "Content-Disposition": f'inline; filename="{nearest_blob_name}"',
+            },
+        )
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
+    except Exception as e:
+        # Handle other errors
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve nearest heatmap: {str(e)}"
+        )
 
 
-@router.get("/{project_id}/areas/{area_id}/predictions/nearest-density")
-def get_nearest_heatmap(
+@router.get(
+    "/{project_id}/areas/{area_id}/predictions/nearest-density",
+    response_model=DensityResponse,
+)
+async def get_nearest_density(
     project_id: str,
     area_id: str,
     camera_id: str,
@@ -422,4 +491,30 @@ def get_nearest_heatmap(
     Returns:
         The density JSON for the nearest camera position
     """
-    pass  # Placeholder for actual implementation
+    try:
+        # Build the blob name prefix
+        blob_prefix = f"{project_id}-{camera_id}-{position_id}"
+
+        # Find the nearest density blob
+        nearest_blob_name, _ = await blob_storage_service.find_nearest_blob(
+            ContainerName.DENSITY, blob_prefix, timestamp, "_density.json"
+        )
+
+        # Get the blob content
+        blob_bytes, _ = await blob_storage_service.get_blob(
+            ContainerName.DENSITY, nearest_blob_name
+        )
+
+        # Parse the JSON content
+        density_data = json.loads(blob_bytes.decode("utf-8"))
+
+        # Return the density data
+        return density_data
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
+    except Exception as e:
+        # Handle other errors
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve nearest density data: {str(e)}"
+        )

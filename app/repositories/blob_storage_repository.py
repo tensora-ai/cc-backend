@@ -1,4 +1,5 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
+from datetime import datetime
 from azure.storage.blob import BlobServiceClient
 from fastapi import HTTPException
 
@@ -16,9 +17,6 @@ class BlobStorageRepository:
             blob_service_client: Azure Blob Service client
         """
         self.blob_service_client = blob_service_client
-        # self.container_client = self.blob_service_client.get_container_client(
-        #    container_name
-        # )
 
     async def get_blob(
         self, container_name: ContainerName, blob_name: str
@@ -70,6 +68,39 @@ class BlobStorageRepository:
                 detail=f"Error retrieving blob from blob storage: {str(e)}",
             )
 
+    async def list_blobs(
+        self, container_name: ContainerName, prefix: str = None
+    ) -> List[str]:
+        """
+        List blobs in a container with optional prefix filtering.
+
+        Args:
+            container_name: Container to list blobs from
+            prefix: Optional prefix to filter blob names
+
+        Returns:
+            List of blob names
+
+        Raises:
+            HTTPException: For blob storage errors
+        """
+        try:
+            # Get container client
+            container_client = self.blob_service_client.get_container_client(
+                container_name.value
+            )
+
+            # List blobs with optional prefix
+            blob_items = container_client.list_blobs(name_starts_with=prefix)
+
+            # Return list of blob names
+            return [blob.name for blob in blob_items]
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Error listing blobs in storage: {str(e)}"
+            )
+
     def _infer_content_type(self, filename: str) -> str:
         """
         Infer content type from filename extension.
@@ -95,6 +126,8 @@ class BlobStorageRepository:
             return "image/tiff"
         elif filename.lower().endswith(".webp"):
             return "image/webp"
+        elif filename.lower().endswith(".json"):
+            return "application/json"
 
         # Default to generic binary if unknown
         return "application/octet-stream"
