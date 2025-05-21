@@ -1,12 +1,13 @@
 from fastapi import HTTPException, Depends
 from typing import Tuple, Optional
 from azure.storage.blob import BlobServiceClient
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.models.blob_storage import ContainerName
 from app.repositories.blob_storage_repository import BlobStorageRepository
 from app.core.blob_storage import get_blob_service_client
 from app.core.logging import get_logger
+import re
 
 
 class BlobStorageService:
@@ -55,30 +56,33 @@ class BlobStorageService:
         self, blob_name: str, suffix: str
     ) -> Optional[datetime]:
         """
-        Extract timestamp from a blob name.
+        Extract timestamp from a blob name using regex pattern matching and make it timezone-aware.
 
         Args:
             blob_name: Name of the blob
             suffix: Suffix for the blob name (to help identify timestamp part)
 
         Returns:
-            Extracted timestamp or None if pattern doesn't match
+            Extracted timezone-aware timestamp or None if pattern doesn't match
         """
         try:
-            # Remove suffix from the blob name
-            name_without_suffix = blob_name.replace(suffix, "")
+            # Use regex to find the timestamp pattern (YYYY_MM_DD-HH_MM_SS)
+            timestamp_pattern = r"(\d{4}_\d{2}_\d{2}-\d{2}_\d{2}_\d{2})"
+            match = re.search(timestamp_pattern, blob_name)
 
-            # Split by hyphen to get parts
-            parts = name_without_suffix.split("-")
-            if len(parts) < 4:
+            if not match:
                 return None
 
-            # The last part should contain the timestamp
-            timestamp_part = parts[3]
+            # Extract the matched timestamp string
+            timestamp_str = match.group(1)
 
-            # Parse timestamp (format: YYYY_MM_DD-HH_MM_SS)
-            timestamp = datetime.strptime(timestamp_part, "%Y_%m_%d-%H_%M_%S")
-            return timestamp
+            # Parse timestamp
+            naive_timestamp = datetime.strptime(timestamp_str, "%Y_%m_%d-%H_%M_%S")
+
+            # Make it timezone-aware with UTC
+            aware_timestamp = naive_timestamp.replace(tzinfo=timezone.utc)
+
+            return aware_timestamp
 
         except (ValueError, IndexError):
             return None
