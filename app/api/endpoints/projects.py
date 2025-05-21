@@ -1,9 +1,10 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from app.models.prediction import (
     AggregateTimeSeriesRequest,
     AggregateTimeSeriesResponse,
+    DensityResponse,
 )
 from app.models.project import (
     Project,
@@ -357,7 +358,7 @@ def get_nearest_camera_image(
     position_id: str,
     timestamp: datetime,
     blob_storage_service: BlobStorageService = Depends(get_blob_storage_service),
-) -> str:
+) -> Response:
     """
     Get the camera image for a specific camera position nearest to the given timestamp.
 
@@ -382,7 +383,7 @@ def get_nearest_heatmap(
     position_id: str,
     timestamp: datetime,
     blob_storage_service: BlobStorageService = Depends(get_blob_storage_service),
-) -> str:
+) -> Response:
     """
     Get the heatmap for a specific camera position nearest to the given timestamp.
 
@@ -395,5 +396,30 @@ def get_nearest_heatmap(
         blob_storage_service: Service for blob storage operations
     Returns:
         Bytes of the nearest heatmap
+    """
+    pass  # Placeholder for actual implementation
+
+
+@router.get("/{project_id}/areas/{area_id}/predictions/nearest-density")
+def get_nearest_heatmap(
+    project_id: str,
+    area_id: str,
+    camera_id: str,
+    position_id: str,
+    timestamp: datetime,
+    blob_storage_service: BlobStorageService = Depends(get_blob_storage_service),
+) -> DensityResponse:
+    """
+    Get the density JSON for a specific camera position nearest to the given timestamp.
+
+    Args:
+        project_id: Project identifier
+        area_id: Area identifier
+        camera_id: Camera identifier
+        position_id: Camera position identifier
+        timestamp: Timestamp for the image retrieval
+        blob_storage_service: Service for blob storage operations
+    Returns:
+        The density JSON for the nearest camera position
     """
     pass  # Placeholder for actual implementation

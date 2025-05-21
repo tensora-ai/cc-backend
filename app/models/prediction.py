@@ -158,3 +158,6 @@ class AggregateTimeSeriesResponse(BaseModel):
                 ],
             }
         }
+
+
+type DensityResponse = List[List[float]]
