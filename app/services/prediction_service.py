@@ -59,7 +59,7 @@ class PredictionService:
         return project.get_area(area_id)
 
     def aggregate_time_series(
-        self, request: AggregateTimeSeriesRequest
+        self, project_id: str, area_id: str, request: AggregateTimeSeriesRequest
     ) -> AggregateTimeSeriesResponse:
         """
         Aggregate predictions for an area over time.
@@ -82,18 +82,18 @@ class PredictionService:
             HTTPException: If project/area not found or data is insufficient
         """
         # Step 1: Validate project and area exist
-        area = self._get_area(request.project, request.area)
+        area = self._get_area(project_id, area_id)
 
         if not area:
             # Provide helpful error message based on what's missing
-            if request.project not in self.camera_mappings:
+            if project_id not in self.camera_mappings:
                 raise HTTPException(
-                    status_code=404, detail=f"Project '{request.project}' not found"
+                    status_code=404, detail=f"Project '{project_id}' not found"
                 )
             else:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"Area '{request.area}' not found in project '{request.project}'",
+                    detail=f"Area '{area_id}' not found in project '{project_id}'",
                 )
 
         # Step 2: Calculate time range
@@ -102,12 +102,12 @@ class PredictionService:
 
         # Step 3: Get prediction data for all cameras in the area
         predictions = self.prediction_repo.get_predictions_for_area(
-            request.project, request.area, area.cameras, start_dt, end_dt
+            project_id, area_id, area.cameras, start_dt, end_dt
         )
 
         # Step 4: Create interpolation functions for each camera
         interpolation_result = PredictionProcessor.create_interpolation_functions(
-            predictions, start_dt, request.project
+            predictions, start_dt, project_id
         )
 
         # Step 5: Generate time grid from min to max date

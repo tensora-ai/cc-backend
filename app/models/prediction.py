@@ -97,8 +97,6 @@ class InterpolationResult(BaseModel):
 class AggregateTimeSeriesRequest(BaseModel):
     """Request model for aggregating time series data."""
 
-    project: str = Field(..., description="Project name")
-    area: str = Field(..., description="Area name")
     end_date: datetime = Field(..., description="End date for the time series")
     lookback_hours: float = (
         Field(

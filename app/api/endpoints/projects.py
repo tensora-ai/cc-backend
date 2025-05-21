@@ -1,5 +1,10 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.models.prediction import (
+    AggregateTimeSeriesRequest,
+    AggregateTimeSeriesResponse,
+)
 from app.models.project import (
     Project,
     ProjectCreate,
@@ -13,6 +18,11 @@ from app.models.project import (
     CameraConfigCreate,
     CameraConfigUpdate,
 )
+from app.services.blob_storage_service import (
+    BlobStorageService,
+    get_blob_storage_service,
+)
+from app.services.prediction_service import PredictionService, get_prediction_service
 from app.services.project_service import ProjectService, get_project_service
 from app.core.auth import validate_api_key
 
@@ -309,3 +319,81 @@ def delete_camera_config(
         raise HTTPException(
             status_code=500, detail=f"Failed to delete camera configuration: {str(e)}"
         )
+
+
+@router.post(
+    "/{project_id}/areas/{area_id}/predictions/aggregate",
+    response_model=AggregateTimeSeriesResponse,
+)
+def aggregate_time_series(
+    project_id: str,
+    area_id: str,
+    request: AggregateTimeSeriesRequest,
+    prediction_service: PredictionService = Depends(get_prediction_service),
+) -> AggregateTimeSeriesResponse:
+    """
+    Aggregate predictions for a specific area over a time period.
+
+    Calculates the sum of all camera predictions for the specified area,
+    with optional moving average smoothing.
+
+    Args:
+        project_id: Project identifier
+        area_id: Area identifier
+        request: Parameters specifying time range, and smoothing
+        prediction_service: Service for prediction calculations
+
+    Returns:
+        Aggregated predictions with timestamps
+    """
+    return prediction_service.aggregate_time_series(project_id, area_id, request)
+
+
+@router.get("/{project_id}/areas/{area_id}/predictions/nearest-camera-image")
+def get_nearest_camera_image(
+    project_id: str,
+    area_id: str,
+    camera_id: str,
+    position_id: str,
+    timestamp: datetime,
+    blob_storage_service: BlobStorageService = Depends(get_blob_storage_service),
+) -> str:
+    """
+    Get the camera image for a specific camera position nearest to the given timestamp.
+
+    Args:
+        project_id: Project identifier
+        area_id: Area identifier
+        camera_id: Camera identifier
+        position_id: Camera position identifier
+        timestamp: Timestamp for the image retrieval
+        blob_storage_service: Service for blob storage operations
+    Returns:
+        Bytes of the nearest camera image
+    """
+    pass  # Placeholder for actual implementation
+
+
+@router.get("/{project_id}/areas/{area_id}/predictions/nearest-heatmap")
+def get_nearest_heatmap(
+    project_id: str,
+    area_id: str,
+    camera_id: str,
+    position_id: str,
+    timestamp: datetime,
+    blob_storage_service: BlobStorageService = Depends(get_blob_storage_service),
+) -> str:
+    """
+    Get the heatmap for a specific camera position nearest to the given timestamp.
+
+    Args:
+        project_id: Project identifier
+        area_id: Area identifier
+        camera_id: Camera identifier
+        position_id: Camera position identifier
+        timestamp: Timestamp for the image retrieval
+        blob_storage_service: Service for blob storage operations
+    Returns:
+        Bytes of the nearest heatmap
+    """
+    pass  # Placeholder for actual implementation
