@@ -2,6 +2,7 @@ from fastapi import HTTPException, Depends
 from typing import Tuple
 from azure.storage.blob import BlobServiceClient
 
+from app.models.blob_storage import ContainerName
 from app.repositories.blob_storage_repository import BlobStorageRepository
 from app.core.blob_storage import get_blob_service_client
 
@@ -52,11 +53,14 @@ class BlobStorageService:
         """
         self.blob_storage_repository = blob_storage_repository
 
-    async def get_blob(self, blob_name: str) -> Tuple[bytes, str]:
+    async def get_blob(
+        self, container_name: ContainerName, blob_name: str
+    ) -> Tuple[bytes, str]:
         """
-        Retrieve a blob from blob storage as bytes with content type.
+        Retrieve a blob from blob storage as bytes with content type from a given container.
 
         Args:
+            container_name: Name of the container to retrieve the blob from
             blob_name: Name of the blob to retrieve
 
         Returns:
@@ -66,7 +70,7 @@ class BlobStorageService:
             HTTPException: If the blob is not found
         """
         # Get the blob
-        result = await self.blob_storage_repository.get_blob(blob_name)
+        result = await self.blob_storage_repository.get_blob(container_name, blob_name)
 
         # Check if the blob was found
         if result is None:

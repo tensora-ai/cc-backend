@@ -2,29 +2,32 @@ from typing import Optional, Tuple
 from azure.storage.blob import BlobServiceClient
 from fastapi import HTTPException
 
+from app.models.blob_storage import ContainerName
+
 
 class BlobStorageRepository:
     """Repository for accessing binaries from Azure Blob Storage."""
 
-    def __init__(self, blob_service_client: BlobServiceClient, container_name: str):
+    def __init__(self, blob_service_client: BlobServiceClient):
         """
         Initialize the blob storage repository.
 
         Args:
             blob_service_client: Azure Blob Service client
-            container_name: Name of the container to access
         """
         self.blob_service_client = blob_service_client
-        self.container_name = container_name
-        self.container_client = self.blob_service_client.get_container_client(
-            container_name
-        )
+        # self.container_client = self.blob_service_client.get_container_client(
+        #    container_name
+        # )
 
-    async def get_blob(self, blob_name: str) -> Optional[Tuple[bytes, str]]:
+    async def get_blob(
+        self, container_name: ContainerName, blob_name: str
+    ) -> Optional[Tuple[bytes, str]]:
         """
-        Retrieve a blob as bytes with content type.
+        Retrieve a blob as bytes with content type from the given container.
 
         Args:
+            container_name: Name of the container to retrieve the blob from
             blob_name: Name of the blob to retrieve
 
         Returns:
@@ -34,8 +37,13 @@ class BlobStorageRepository:
             HTTPException: For blob storage errors other than not found
         """
         try:
+            # Get the container client
+            container_client = self.blob_service_client.get_container_client(
+                container_name.value
+            )
+
             # Get a client for the specific blob
-            blob_client = self.container_client.get_blob_client(blob_name)
+            blob_client = container_client.get_blob_client(blob_name)
 
             # Get properties to determine content type
             properties = blob_client.get_blob_properties()
