@@ -1,6 +1,6 @@
 import numpy as np
 from fastapi import HTTPException, Depends
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Dict, Optional
 from azure.cosmos import ContainerProxy
 
@@ -58,6 +58,18 @@ class PredictionService:
 
         return project.get_area(area_id)
 
+    def _create_empty_time_series_response(self) -> AggregateTimeSeriesResponse:
+        """
+        Create an empty time series response.
+
+        Returns:
+            AggregateTimeSeriesResponse with empty time series
+        """
+        return AggregateTimeSeriesResponse(
+            time_series=[],  # Empty list - no data points
+            source_ids=[],  # No source IDs since no data was used
+        )
+
     def aggregate_time_series(
         self, project_id: str, area_id: str, request: AggregateTimeSeriesRequest
     ) -> AggregateTimeSeriesResponse:
@@ -67,19 +79,22 @@ class PredictionService:
         This method:
         1. Validates the project and area exist
         2. Retrieves prediction data for all cameras in the area
-        3. Creates interpolation functions for each camera
-        4. Calculates the sum across all cameras
-        5. Applies optional smoothing
-        6. Returns the aggregated time series
+        3. Checks data availability and handles empty/partial data cases
+        4. Creates interpolation functions for each camera
+        5. Calculates the sum across all cameras
+        6. Applies optional smoothing
+        7. Returns the aggregated time series
 
         Args:
+            project_id: Project identifier
+            area_id: Area identifier
             request: Parameters for the aggregation
 
         Returns:
-            Aggregated time series data
+            Aggregated time series data (empty if no predictions found)
 
         Raises:
-            HTTPException: If project/area not found or data is insufficient
+            HTTPException: If project/area not found or partial data scenario
         """
         # Step 1: Validate project and area exist
         area = self._get_area(project_id, area_id)
@@ -105,12 +120,32 @@ class PredictionService:
             project_id, area_id, area.cameras, start_dt, end_dt
         )
 
-        # Step 4: Create interpolation functions for each camera
+        # Step 4: Check data availability and handle different scenarios
+        cameras_with_data = [pred for pred in predictions if pred.has_data]
+        cameras_without_data = [pred for pred in predictions if not pred.has_data]
+
+        # Case 1: No cameras have any data - return empty time series
+        if len(cameras_with_data) == 0:
+            return self._create_empty_time_series_response()
+
+        # Case 2: Some cameras have data, others don't - this is problematic for aggregation
+        if len(cameras_without_data) > 0:
+            empty_camera_names = [
+                f"{pred.camera_id}@{pred.position}" for pred in cameras_without_data
+            ]
+            raise HTTPException(
+                status_code=422,
+                detail=f"Partial prediction data found. Missing data for cameras: {', '.join(empty_camera_names)}. "
+                f"Cannot aggregate when some cameras have data but others don't in the requested timespan.",
+            )
+
+        # Case 3: All cameras have data - proceed with normal processing
+        # Step 5: Create interpolation functions for each camera
         interpolation_result = PredictionProcessor.create_interpolation_functions(
             predictions, start_dt, project_id
         )
 
-        # Step 5: Generate time grid from min to max date
+        # Step 6: Generate time grid from min to max date
         # Create a uniform time grid for evaluation (30-second intervals)
         time_grid = np.linspace(
             (
@@ -122,19 +157,19 @@ class PredictionService:
             num=int(request.lookback_hours * 120),
         )
 
-        # Step 6: Evaluate and sum all camera predictions on the time grid
+        # Step 7: Evaluate and sum all camera predictions on the time grid
         # Apply each interpolation function to the time grid and sum results
         sum_values = np.sum(
             [func(time_grid) for func in interpolation_result.interpolation_funcs],
             axis=0,
         )
 
-        # Step 7: Apply moving average smoothing if requested
+        # Step 8: Apply moving average smoothing if requested
         smoothed_values = PredictionProcessor.apply_moving_average(
             sum_values, request.half_moving_avg_size
         )
 
-        # Step 8: Generate time series points
+        # Step 9: Generate time series points
         time_series = [
             TimeSeriesPoint(
                 timestamp=start_dt + timedelta(seconds=t),

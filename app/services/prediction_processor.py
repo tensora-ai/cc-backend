@@ -22,6 +22,9 @@ class PredictionProcessor:
         """
         Create interpolation functions for each camera's predictions.
 
+        Note: This method assumes all predictions have data. Empty data scenarios
+        should be handled before calling this method.
+
         Args:
             predictions: List of prediction data for all cameras in an area
             start_dt: Start datetime for the time series
@@ -29,21 +32,7 @@ class PredictionProcessor:
 
         Returns:
             InterpolationResult: Object containing interpolation functions, min/max dates, and source IDs
-        Raises:
-            HTTPException: If there are cameras with no prediction data
         """
-        # Check which cameras have no data
-        empty_cameras = [
-            f"{pred.camera_id}@{pred.position}"
-            for pred in predictions
-            if not pred.has_data
-        ]
-
-        if empty_cameras:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Not enough predictions found for cameras: {', '.join(empty_cameras)}",
-            )
 
         # Create interpolation functions for each camera
         interpolation_funcs = []
