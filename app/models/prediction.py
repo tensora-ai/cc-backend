@@ -16,6 +16,19 @@ class CameraPosition(BaseModel):
         return f"{self.camera_id}@{self.position}"
 
 
+class CameraTimestamp(BaseModel):
+    """Timestamp information for a specific camera/position combination."""
+
+    camera_id: str = Field(..., description="Camera identifier")
+    position: str = Field(..., description="Position identifier")
+    timestamp: datetime = Field(..., description="Timestamp of the prediction")
+
+    def get_blob_prefix(self, project_id: str) -> str:
+        """Generate blob prefix for this camera timestamp."""
+        date_str = self.timestamp.strftime("%Y_%m_%d-%H_%M_%S")
+        return f"{project_id}-{self.camera_id}-{self.position}-{date_str}"
+
+
 class AreaMapping(BaseModel):
     """Mapping of an area to its cameras and positions."""
 
@@ -70,14 +83,6 @@ class PredictionData(BaseModel):
             raise ValueError("No prediction data available")
         return self.dates[-1]
 
-    @property
-    def source_id(self) -> str:
-        """Generate a source ID for this prediction data."""
-        if not self.has_data:
-            raise ValueError("No prediction data available")
-        date_str = datetime.strftime(self.latest_date, "%Y_%m_%d-%H_%M_%S")
-        return f"{self.camera_id}-{self.position}-{date_str}"
-
 
 class InterpolationResult(BaseModel):
     """Result of the interpolation process for all cameras."""
@@ -87,7 +92,6 @@ class InterpolationResult(BaseModel):
     )
     min_date: datetime = Field(..., description="Earliest date across all predictions")
     max_date: datetime = Field(..., description="Latest date across all predictions")
-    source_ids: List[str] = Field(..., description="Source IDs for all cameras used")
 
     class Config:
         arbitrary_types_allowed = True
@@ -115,8 +119,6 @@ class AggregateTimeSeriesRequest(BaseModel):
         json_encoders = {datetime: lambda v: v.strftime(DATETIME_FORMAT)}
         json_schema_extra = {
             "example": {
-                "project": "eventcore-demo",
-                "area": "test_area",
                 "end_date": "2025-03-05T10:00:00Z",
                 "lookback_hours": 3.0,
                 "half_moving_avg_size": 2,
@@ -140,8 +142,9 @@ class AggregateTimeSeriesResponse(BaseModel):
     time_series: List[TimeSeriesPoint] = Field(
         ..., description="List of time series data points"
     )
-    source_ids: List[str] = Field(
-        ..., description="IDs of he latest predictions used to compute the aggregation"
+    camera_timestamps: List[CameraTimestamp] = Field(
+        default_factory=list,
+        description="All available timestamps for each camera/position within the requested time range",
     )
 
     class Config:
@@ -152,9 +155,22 @@ class AggregateTimeSeriesResponse(BaseModel):
                     {"timestamp": "2025-01-01T12:00:00Z", "value": 42},
                     {"timestamp": "2025-01-01T12:05:00Z", "value": 45},
                 ],
-                "source_ids": [
-                    "project1-camera1-position1-2025_01_01-12_00_00",
-                    "project1-camera2-position1-2025_01_01-12_00_00",
+                "camera_timestamps": [
+                    {
+                        "camera_id": "camera1",
+                        "position": "position1",
+                        "timestamp": "2025-01-01T12:00:00Z",
+                    },
+                    {
+                        "camera_id": "camera1",
+                        "position": "position1",
+                        "timestamp": "2025-01-01T12:05:00Z",
+                    },
+                    {
+                        "camera_id": "camera2",
+                        "position": "position1",
+                        "timestamp": "2025-01-01T12:00:00Z",
+                    },
                 ],
             }
         }
