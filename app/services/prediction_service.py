@@ -1,6 +1,6 @@
 import numpy as np
 from fastapi import HTTPException, Depends
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Dict, Optional
 from azure.cosmos import ContainerProxy
 
@@ -11,6 +11,7 @@ from app.models.prediction import (
     ProjectMapping,
     AreaMapping,
     TimeSeriesPoint,
+    CameraTimestamp,
 )
 from app.repositories.prediction_repository import PredictionRepository
 from app.repositories.project_repository import ProjectRepository
@@ -67,7 +68,7 @@ class PredictionService:
         """
         return AggregateTimeSeriesResponse(
             time_series=[],  # Empty list - no data points
-            source_ids=[],  # No source IDs since no data was used
+            camera_timestamps=[],  # No camera timestamps since no data was used
         )
 
     def aggregate_time_series(
@@ -83,7 +84,7 @@ class PredictionService:
         4. Creates interpolation functions for each camera
         5. Calculates the sum across all cameras
         6. Applies optional smoothing
-        7. Returns the aggregated time series
+        7. Returns the aggregated time series with all actual timestamps from the database
 
         Args:
             project_id: Project identifier
@@ -178,9 +179,23 @@ class PredictionService:
             for t, v in zip(time_grid, smoothed_values)
         ]
 
-        # Return the completed response
+        # Step 10: Create camera timestamps for ALL available ACTUAL prediction timestamps
+        # These are the real timestamps from the CosmosDB database, not synthetic ones
+        camera_timestamps = []
+        for pred in cameras_with_data:
+            # Extract the actual timestamps from the database for this camera/position
+            for timestamp in pred.dates:
+                camera_timestamps.append(
+                    CameraTimestamp(
+                        camera_id=pred.camera_id,
+                        position=pred.position,
+                        timestamp=timestamp,  # This is the actual timestamp from CosmosDB
+                    )
+                )
+
+        # Return the completed response with actual timestamps
         return AggregateTimeSeriesResponse(
-            time_series=time_series, source_ids=interpolation_result.source_ids
+            time_series=time_series, camera_timestamps=camera_timestamps
         )
 
 

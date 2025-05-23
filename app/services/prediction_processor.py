@@ -1,12 +1,10 @@
 import numpy as np
 from scipy.interpolate import interp1d
-from fastapi import HTTPException
 from typing import List
 from datetime import datetime, timedelta
 
 from app.models.prediction import (
     TimeSeriesPoint,
-    DATETIME_FORMAT,
     PredictionData,
     InterpolationResult,
 )
@@ -31,18 +29,14 @@ class PredictionProcessor:
             project_id: Project identifier
 
         Returns:
-            InterpolationResult: Object containing interpolation functions, min/max dates, and source IDs
+            InterpolationResult: Object containing interpolation functions, min/max dates
         """
 
         # Create interpolation functions for each camera
         interpolation_funcs = []
-        source_ids = []
         dates = []
 
         for pred in predictions:
-            # Create source ID for this camera
-            source_ids.append(f"{project_id}-{pred.source_id}")
-
             # Collect all dates for min/max calculation
             dates.extend(pred.dates)
 
@@ -77,7 +71,6 @@ class PredictionProcessor:
             interpolation_funcs=interpolation_funcs,
             min_date=min_date,
             max_date=max_date,
-            source_ids=source_ids,
         )
 
     @staticmethod
