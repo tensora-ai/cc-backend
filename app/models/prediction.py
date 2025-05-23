@@ -160,4 +160,4 @@ class AggregateTimeSeriesResponse(BaseModel):
         }
 
 
-type DensityResponse = List[List[float]]
+type DensityData = List[List[float]]

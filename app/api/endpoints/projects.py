@@ -6,7 +6,7 @@ from app.models.blob_storage import ContainerName
 from app.models.prediction import (
     AggregateTimeSeriesRequest,
     AggregateTimeSeriesResponse,
-    DensityResponse,
+    DensityData,
 )
 from app.models.project import (
     Project,
@@ -468,7 +468,6 @@ async def get_nearest_heatmap(
 
 @router.get(
     "/{project_id}/areas/{area_id}/nearest-density",
-    response_model=DensityResponse,
 )
 async def get_nearest_density(
     project_id: str,
@@ -477,7 +476,7 @@ async def get_nearest_density(
     position_id: str,
     timestamp: datetime,
     blob_storage_service: BlobStorageService = Depends(get_blob_storage_service),
-) -> DensityResponse:
+) -> Response:
     """
     Get the density JSON for a specific camera position nearest to the given timestamp.
 
@@ -489,27 +488,36 @@ async def get_nearest_density(
         timestamp: Timestamp for the image retrieval
         blob_storage_service: Service for blob storage operations
     Returns:
-        The density JSON for the nearest camera position
+        The density JSON for the nearest camera position with timestamp header
     """
     try:
         # Build the blob name prefix
         blob_prefix = f"{project_id}-{camera_id}-{position_id}"
 
         # Find the nearest density blob
-        nearest_blob_name, _ = await blob_storage_service.find_nearest_blob(
-            ContainerName.DENSITY, blob_prefix, timestamp, "_density.json"
+        nearest_blob_name, nearest_timestamp = (
+            await blob_storage_service.find_nearest_blob(
+                ContainerName.DENSITY, blob_prefix, timestamp, "_density.json"
+            )
         )
 
         # Get the blob content
-        blob_bytes, _ = await blob_storage_service.get_blob(
+        blob_bytes, content_type = await blob_storage_service.get_blob(
             ContainerName.DENSITY, nearest_blob_name
         )
 
         # Parse the JSON content
-        density_data = json.loads(blob_bytes.decode("utf-8"))
+        density_data: DensityData = json.loads(blob_bytes.decode("utf-8"))
 
-        # Return the density data
-        return density_data
+        # Return the density data as JSON with the nearest timestamp header
+        return Response(
+            content=json.dumps(density_data),
+            media_type="application/json",
+            headers={
+                "X-Nearest-Timestamp": nearest_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "Content-Disposition": f'inline; filename="{nearest_blob_name}"',
+            },
+        )
     except HTTPException as e:
         # Re-raise HTTP exceptions
         raise e
