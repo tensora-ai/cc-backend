@@ -141,45 +141,8 @@ class PredictionService:
             )
 
         # Case 3: All cameras have data - proceed with normal processing
-        # Step 5: Create interpolation functions for each camera
-        interpolation_result = PredictionProcessor.create_interpolation_functions(
-            predictions, start_dt, project_id
-        )
 
-        # Step 6: Generate time grid from min to max date
-        # Create a uniform time grid for evaluation (30-second intervals)
-        time_grid = np.linspace(
-            (
-                interpolation_result.min_date.astimezone(start_dt.tzinfo) - start_dt
-            ).total_seconds(),
-            (
-                interpolation_result.max_date.astimezone(start_dt.tzinfo) - start_dt
-            ).total_seconds(),
-            num=int(request.lookback_hours * 120),
-        )
-
-        # Step 7: Evaluate and sum all camera predictions on the time grid
-        # Apply each interpolation function to the time grid and sum results
-        sum_values = np.sum(
-            [func(time_grid) for func in interpolation_result.interpolation_funcs],
-            axis=0,
-        )
-
-        # Step 8: Apply moving average smoothing if requested
-        smoothed_values = PredictionProcessor.apply_moving_average(
-            sum_values, request.half_moving_avg_size
-        )
-
-        # Step 9: Generate time series points
-        time_series = [
-            TimeSeriesPoint(
-                timestamp=start_dt + timedelta(seconds=t),
-                value=max(0, int(v)),  # Ensure non-negative integer values
-            )
-            for t, v in zip(time_grid, smoothed_values)
-        ]
-
-        # Step 10: Create camera timestamps for ALL available ACTUAL prediction timestamps
+        # Step 5: Create camera timestamps for ALL available ACTUAL prediction timestamps
         # These are the real timestamps from the CosmosDB database, not synthetic ones
         camera_timestamps = []
         for pred in cameras_with_data:
@@ -192,6 +155,44 @@ class PredictionService:
                         timestamp=timestamp,  # This is the actual timestamp from CosmosDB
                     )
                 )
+
+        # Step 6: Create interpolation functions for each camera
+        interpolation_result = PredictionProcessor.create_interpolation_functions(
+            predictions, start_dt, project_id
+        )
+
+        # Step 7: Generate time grid from min to max date
+        # Create a uniform time grid for evaluation (30-second intervals)
+        time_grid = np.linspace(
+            (
+                interpolation_result.min_date.astimezone(start_dt.tzinfo) - start_dt
+            ).total_seconds(),
+            (
+                interpolation_result.max_date.astimezone(start_dt.tzinfo) - start_dt
+            ).total_seconds(),
+            num=int(request.lookback_hours * 120),
+        )
+
+        # Step 8: Evaluate and sum all camera predictions on the time grid
+        # Apply each interpolation function to the time grid and sum results
+        sum_values = np.sum(
+            [func(time_grid) for func in interpolation_result.interpolation_funcs],
+            axis=0,
+        )
+
+        # Step 9: Apply moving average smoothing if requested
+        smoothed_values = PredictionProcessor.apply_moving_average(
+            sum_values, request.half_moving_avg_size
+        )
+
+        # Step 10: Generate time series points
+        time_series = [
+            TimeSeriesPoint(
+                timestamp=start_dt + timedelta(seconds=t),
+                value=max(0, int(v)),  # Ensure non-negative integer values
+            )
+            for t, v in zip(time_grid, smoothed_values)
+        ]
 
         # Return the completed response with actual timestamps
         return AggregateTimeSeriesResponse(

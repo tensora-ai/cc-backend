@@ -1,12 +1,8 @@
-from datetime import datetime
-import json
 from fastapi import APIRouter, Depends, HTTPException, Response
 
-from app.models.blob_storage import ContainerName
 from app.models.prediction import (
     AggregateTimeSeriesRequest,
     AggregateTimeSeriesResponse,
-    DensityData,
 )
 from app.models.project import (
     Project,
@@ -20,10 +16,6 @@ from app.models.project import (
     AreaUpdate,
     CameraConfigCreate,
     CameraConfigUpdate,
-)
-from app.services.blob_storage_service import (
-    BlobStorageService,
-    get_blob_storage_service,
 )
 from app.services.prediction_service import PredictionService, get_prediction_service
 from app.services.project_service import ProjectService, get_project_service
