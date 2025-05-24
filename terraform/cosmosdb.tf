@@ -25,20 +25,20 @@ resource "azurerm_cosmosdb_sql_database" "count" {
   account_name        = azurerm_cosmosdb_account.count.name
 }
 
+resource "azurerm_cosmosdb_sql_container" "predictions_container" {
+  name                  = "predictions"
+  resource_group_name   = "rg-count-${var.customer}-${var.environment}-storage"
+  account_name          = azurerm_cosmosdb_account.count.name
+  database_name         = azurerm_cosmosdb_sql_database.count.name
+  partition_key_paths   = ["/project"]
+  partition_key_version = 2
+}
+
 resource "azurerm_cosmosdb_sql_container" "projects_container" {
   name                  = "projects"
   resource_group_name   = "rg-count-${var.customer}-${var.environment}-storage"
   account_name          = azurerm_cosmosdb_account.count.name
   database_name         = azurerm_cosmosdb_sql_database.count.name
   partition_key_paths   = ["/id"]
-  partition_key_version = 2
-}
-
-resource "azurerm_cosmosdb_sql_container" "frontend_projects_container" {
-  name                  = "frontend-projects"
-  resource_group_name   = "rg-count-${var.customer}-${var.environment}-storage"
-  account_name          = azurerm_cosmosdb_account.count.name
-  database_name         = azurerm_cosmosdb_sql_database.count.name
-  partition_key_paths   = ["/name"]
   partition_key_version = 2
 }
