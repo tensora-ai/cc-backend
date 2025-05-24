@@ -15,7 +15,7 @@ class PredictionProcessor:
 
     @staticmethod
     def create_interpolation_functions(
-        predictions: List[PredictionData], start_dt: datetime, project_id: str
+        predictions: List[PredictionData], start_dt: datetime
     ) -> InterpolationResult:
         """
         Create interpolation functions for each camera's predictions.

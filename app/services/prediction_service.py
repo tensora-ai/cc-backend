@@ -1,6 +1,6 @@
 import numpy as np
 from fastapi import HTTPException, Depends
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional
 from azure.cosmos import ContainerProxy
 
@@ -158,20 +158,29 @@ class PredictionService:
 
         # Step 6: Create interpolation functions for each camera
         interpolation_result = PredictionProcessor.create_interpolation_functions(
-            predictions, start_dt, project_id
+            predictions, start_dt
         )
 
         # Step 7: Generate time grid from min to max date
+
+        # Convert to UTC if timezone-aware, or assume UTC if naive
+        def to_utc(dt: datetime) -> datetime:
+            if dt.tzinfo is None:
+                return dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc)
+
+        min_date_utc: datetime = to_utc(interpolation_result.min_date)
+        max_date_utc: datetime = to_utc(interpolation_result.max_date)
+        start_dt_utc: datetime = to_utc(start_dt)
+
         # Create a uniform time grid for evaluation (30-second intervals)
         time_grid = np.linspace(
-            (
-                interpolation_result.min_date.astimezone(start_dt.tzinfo) - start_dt
-            ).total_seconds(),
-            (
-                interpolation_result.max_date.astimezone(start_dt.tzinfo) - start_dt
-            ).total_seconds(),
+            (min_date_utc - start_dt_utc).total_seconds(),
+            (max_date_utc - start_dt_utc).total_seconds(),
             num=int(request.lookback_hours * 120),
         )
+
+        print(time_grid)
 
         # Step 8: Evaluate and sum all camera predictions on the time grid
         # Apply each interpolation function to the time grid and sum results

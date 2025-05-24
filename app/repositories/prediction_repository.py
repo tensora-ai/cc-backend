@@ -36,6 +36,10 @@ class PredictionRepository:
         start_date_str = start_date.strftime(DATETIME_FORMAT)
         end_date_str = end_date.strftime(DATETIME_FORMAT)
 
+        print(
+            f"Querying predictions from {start_date_str} to {end_date_str} for area {area_id}"
+        )
+
         # Create empty result container
         prediction_data_list = []
 
@@ -87,16 +91,13 @@ class PredictionRepository:
         )
 
         # Process each result
-
         for prediction in query_results:
             try:
                 # Extract timestamp and count for the requested area
                 timestamp_str = prediction["timestamp"]
 
                 # Convert string timestamp to datetime object retaining UTC timezone info
-                timestamp = datetime.strptime(
-                    timestamp_str, DATETIME_FORMAT
-                ).astimezone(tz=UTC)
+                timestamp = datetime.strptime(timestamp_str, DATETIME_FORMAT)
 
                 dates.append(timestamp)
                 counts.append(prediction["counts"][area_id])
