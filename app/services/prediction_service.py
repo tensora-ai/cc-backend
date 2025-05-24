@@ -16,6 +16,7 @@ from app.models.prediction import (
 from app.repositories.prediction_repository import PredictionRepository
 from app.repositories.project_repository import ProjectRepository
 from app.services.prediction_processor import PredictionProcessor
+from app.utils.time_utils import to_utc
 
 
 class PredictionService:
@@ -162,13 +163,6 @@ class PredictionService:
         )
 
         # Step 7: Generate time grid from min to max date
-
-        # Convert to UTC if timezone-aware, or assume UTC if naive
-        def to_utc(dt: datetime) -> datetime:
-            if dt.tzinfo is None:
-                return dt.replace(tzinfo=timezone.utc)
-            return dt.astimezone(timezone.utc)
-
         min_date_utc: datetime = to_utc(interpolation_result.min_date)
         max_date_utc: datetime = to_utc(interpolation_result.max_date)
         start_dt_utc: datetime = to_utc(start_dt)
@@ -179,8 +173,6 @@ class PredictionService:
             (max_date_utc - start_dt_utc).total_seconds(),
             num=int(request.lookback_hours * 120),
         )
-
-        print(time_grid)
 
         # Step 8: Evaluate and sum all camera predictions on the time grid
         # Apply each interpolation function to the time grid and sum results

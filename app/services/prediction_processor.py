@@ -8,6 +8,7 @@ from app.models.prediction import (
     PredictionData,
     InterpolationResult,
 )
+from app.utils.time_utils import to_utc
 
 
 class PredictionProcessor:
@@ -49,7 +50,7 @@ class PredictionProcessor:
             else:
                 # Calculate seconds elapsed since start_dt for each date
                 rescaled_dates = [
-                    (date.astimezone(start_dt.tzinfo) - start_dt).total_seconds()
+                    (to_utc(date) - to_utc(start_dt)).total_seconds()
                     for date in pred.dates
                 ]
 
