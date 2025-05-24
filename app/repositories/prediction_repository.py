@@ -1,6 +1,6 @@
 from azure.cosmos import ContainerProxy
 from typing import List
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.models.prediction import CameraPosition, DATETIME_FORMAT, PredictionData
 
@@ -92,8 +92,12 @@ class PredictionRepository:
             try:
                 # Extract timestamp and count for the requested area
                 timestamp_str = prediction["timestamp"]
-                # Convert string timestamp to datetime object
-                timestamp = datetime.strptime(timestamp_str, DATETIME_FORMAT)
+
+                # Convert string timestamp to datetime object retaining UTC timezone info
+                timestamp = datetime.strptime(
+                    timestamp_str, DATETIME_FORMAT
+                ).astimezone(tz=UTC)
+
                 dates.append(timestamp)
                 counts.append(prediction["counts"][area_id])
             except KeyError:
