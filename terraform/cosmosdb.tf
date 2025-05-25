@@ -1,3 +1,14 @@
+data "azurerm_cosmosdb_account" "count_old" {
+  name                = "count-cosmosdb"
+  resource_group_name = "rg-tensora-count"
+}
+
+data "azurerm_cosmosdb_sql_database" "count_old" {
+  name                = "tensora-count"
+  resource_group_name = "rg-tensora-count"
+  account_name        = data.azurerm_cosmosdb_account.count_old.name
+}
+
 resource "azurerm_cosmosdb_account" "count" {
   name                = "cosno-count-${var.customer}-${var.environment}"
   location            = var.location
