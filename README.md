@@ -54,6 +54,12 @@ curl -X GET "http://localhost:8000/api/v1/health"
 {"status":"SUCCESS"}%
 ```
 
+## Build Docker image
+
+```sh
+docker build -t tensora-count-predict:latest .
+```
+
 ## Lint using Ruff
 
 ```sh
