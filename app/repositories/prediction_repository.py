@@ -3,6 +3,7 @@ from typing import List
 from datetime import datetime
 
 from app.models.prediction import CameraPosition, DATETIME_FORMAT, PredictionData
+from app.core.logging import get_logger
 
 
 class PredictionRepository:
@@ -10,6 +11,7 @@ class PredictionRepository:
 
     def __init__(self, predictions_container: ContainerProxy):
         self.container = predictions_container
+        self.logger = get_logger(__name__)
 
     def get_predictions_for_area(
         self,
@@ -36,8 +38,8 @@ class PredictionRepository:
         start_date_str = start_date.strftime(DATETIME_FORMAT)
         end_date_str = end_date.strftime(DATETIME_FORMAT)
 
-        print(
-            f"Querying predictions from {start_date_str} to {end_date_str} for area {area_id}"
+        self.logger.info(
+            f"Querying predictions from {start_date_str} to {end_date_str}",
         )
 
         # Create empty result container
