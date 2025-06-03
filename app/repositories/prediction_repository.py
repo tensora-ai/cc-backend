@@ -1,6 +1,6 @@
 from azure.cosmos import ContainerProxy
 from typing import List
-from datetime import UTC, datetime
+from datetime import datetime
 
 from app.models.prediction import CameraPosition, DATETIME_FORMAT, PredictionData
 

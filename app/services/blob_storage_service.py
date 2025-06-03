@@ -6,7 +6,6 @@ from app.models.blob_storage import ContainerName
 from app.repositories.blob_storage_repository import BlobStorageRepository
 from app.core.blob_storage import get_blob_service_client
 from app.core.logging import get_logger
-import re
 
 
 class BlobStorageService:

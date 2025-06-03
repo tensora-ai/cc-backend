@@ -1,6 +1,6 @@
 import numpy as np
 from fastapi import HTTPException, Depends
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Dict, Optional
 from azure.cosmos import ContainerProxy
 
