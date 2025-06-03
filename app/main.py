@@ -1,5 +1,4 @@
-from fastapi import FastAPI, Depends
-from fastapi.security.api_key import APIKeyHeader
+from fastapi import FastAPI
 from app.api.routes import router
 from dotenv import load_dotenv
 

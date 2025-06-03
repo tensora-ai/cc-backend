@@ -1,15 +1,14 @@
 import numpy as np
 from scipy.interpolate import interp1d
-from fastapi import HTTPException
-from typing import List, Tuple, Callable
+from typing import List
 from datetime import datetime, timedelta
 
 from app.models.prediction import (
     TimeSeriesPoint,
-    DATETIME_FORMAT,
     PredictionData,
     InterpolationResult,
 )
+from app.utils.time_utils import to_utc
 
 
 class PredictionProcessor:
@@ -17,10 +16,13 @@ class PredictionProcessor:
 
     @staticmethod
     def create_interpolation_functions(
-        predictions: List[PredictionData], start_dt: datetime, project_id: str
+        predictions: List[PredictionData], start_dt: datetime
     ) -> InterpolationResult:
         """
         Create interpolation functions for each camera's predictions.
+
+        Note: This method assumes all predictions have data. Empty data scenarios
+        should be handled before calling this method.
 
         Args:
             predictions: List of prediction data for all cameras in an area
@@ -28,32 +30,14 @@ class PredictionProcessor:
             project_id: Project identifier
 
         Returns:
-            InterpolationResult: Object containing interpolation functions, min/max dates, and source IDs
-        Raises:
-            HTTPException: If there are cameras with no prediction data
+            InterpolationResult: Object containing interpolation functions, min/max dates
         """
-        # Check which cameras have no data
-        empty_cameras = [
-            f"{pred.camera_id}@{pred.position}"
-            for pred in predictions
-            if not pred.has_data
-        ]
-
-        if empty_cameras:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Not enough predictions found for cameras: {', '.join(empty_cameras)}",
-            )
 
         # Create interpolation functions for each camera
         interpolation_funcs = []
-        source_ids = []
         dates = []
 
         for pred in predictions:
-            # Create source ID for this camera
-            source_ids.append(f"{project_id}-{pred.source_id}")
-
             # Collect all dates for min/max calculation
             dates.extend(pred.dates)
 
@@ -66,7 +50,7 @@ class PredictionProcessor:
             else:
                 # Calculate seconds elapsed since start_dt for each date
                 rescaled_dates = [
-                    (date.astimezone(start_dt.tzinfo) - start_dt).total_seconds()
+                    (to_utc(date) - to_utc(start_dt)).total_seconds()
                     for date in pred.dates
                 ]
 
@@ -88,7 +72,6 @@ class PredictionProcessor:
             interpolation_funcs=interpolation_funcs,
             min_date=min_date,
             max_date=max_date,
-            source_ids=source_ids,
         )
 
     @staticmethod

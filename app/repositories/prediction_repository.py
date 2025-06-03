@@ -3,6 +3,7 @@ from typing import List
 from datetime import datetime
 
 from app.models.prediction import CameraPosition, DATETIME_FORMAT, PredictionData
+from app.core.logging import get_logger
 
 
 class PredictionRepository:
@@ -10,8 +11,9 @@ class PredictionRepository:
 
     def __init__(self, predictions_container: ContainerProxy):
         self.container = predictions_container
+        self.logger = get_logger(__name__)
 
-    async def get_predictions_for_area(
+    def get_predictions_for_area(
         self,
         project_id: str,
         area_id: str,
@@ -35,6 +37,10 @@ class PredictionRepository:
         # Format dates for the query
         start_date_str = start_date.strftime(DATETIME_FORMAT)
         end_date_str = end_date.strftime(DATETIME_FORMAT)
+
+        self.logger.info(
+            f"Querying predictions from {start_date_str} to {end_date_str}",
+        )
 
         # Create empty result container
         prediction_data_list = []
@@ -87,13 +93,14 @@ class PredictionRepository:
         )
 
         # Process each result
-
         for prediction in query_results:
             try:
                 # Extract timestamp and count for the requested area
                 timestamp_str = prediction["timestamp"]
-                # Convert string timestamp to datetime object
+
+                # Convert string timestamp to datetime object retaining UTC timezone info
                 timestamp = datetime.strptime(timestamp_str, DATETIME_FORMAT)
+
                 dates.append(timestamp)
                 counts.append(prediction["counts"][area_id])
             except KeyError:
