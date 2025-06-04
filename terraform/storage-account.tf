@@ -1,7 +1,7 @@
-data "azurerm_storage_account" "count_old" {
-  name                = "tensoracountstorage"
-  resource_group_name = "rg-tensora-count"
-}
+//data "azurerm_storage_account" "count_old" {
+//  name                = "tensoracountstorage"
+//  resource_group_name = "rg-tensora-count"
+//}
 
 resource "azurerm_storage_account" "count" {
   name                     = "stcount${var.customer}${var.environment}"
