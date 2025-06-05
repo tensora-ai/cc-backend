@@ -3,6 +3,7 @@ from scipy.interpolate import interp1d
 from typing import List
 from datetime import datetime, timedelta
 
+from app.core.logging import get_logger
 from app.models.prediction import (
     TimeSeriesPoint,
     PredictionData,
@@ -33,6 +34,10 @@ class PredictionProcessor:
             InterpolationResult: Object containing interpolation functions, min/max dates
         """
 
+        get_logger().debug(
+            f"Creating interpolation functions for predictions: {predictions}"
+        )
+
         # Create interpolation functions for each camera
         interpolation_funcs = []
         dates = []
@@ -53,6 +58,10 @@ class PredictionProcessor:
                     (to_utc(date) - to_utc(start_dt)).total_seconds()
                     for date in pred.dates
                 ]
+
+                get_logger().debug(
+                    f"Rescaled dates and counts for {pred.camera_id} at position {pred.position}: \n\n Rescaled Dates: {rescaled_dates} \n Counts: {pred.counts}"
+                )
 
                 # Create linear interpolation function
                 interpolation_funcs.append(
