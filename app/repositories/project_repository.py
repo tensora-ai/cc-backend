@@ -59,7 +59,7 @@ class ProjectRepository:
 
     def get_camera_mappings(self) -> Dict[str, ProjectMapping]:
         """
-        Extract project metadata and create structured mappings from the new project structure.
+        Extract project metadata and create structured mappings from the project structure.
 
         Returns:
             Dict mapping project_id -> ProjectMapping objects
@@ -79,7 +79,7 @@ class ProjectRepository:
             project_id = project_data["id"]
             areas_dict = {}
 
-            # Extract areas and camera configs from the new structure
+            # Extract areas and camera configs from the project structure
             for area in project_data.get("areas", []):
                 area_id = area.get("id")
                 if not area_id:
@@ -95,10 +95,17 @@ class ProjectRepository:
                     position_data = camera_config.get("position", {})
                     position_name = position_data.get("name")
 
+                    # Get masking information from camera config
+                    enable_masking = camera_config.get("enable_masking", False)
+
                     if camera_id and position_name:
-                        # Add this camera position to the area
+                        # Add this camera position to the area with masking info
                         areas_dict[area_id].cameras.append(
-                            CameraPosition(camera_id=camera_id, position=position_name)
+                            CameraPosition(
+                                camera_id=camera_id,
+                                position=position_name,
+                                enable_masking=enable_masking,
+                            )
                         )
 
             # Create the project mapping

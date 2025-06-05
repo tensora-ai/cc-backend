@@ -1,3 +1,5 @@
+# app/repositories/prediction_repository.py
+
 from azure.cosmos import ContainerProxy
 from typing import List
 from datetime import datetime
@@ -27,7 +29,7 @@ class PredictionRepository:
         Args:
             project_id: Project identifier (partition key)
             area_id: Area identifier for count lookup
-            camera_positions: List of CameraPosition objects
+            camera_positions: List of CameraPosition objects with masking information
             start_date: Start date for the query
             end_date: End date for the query
 
@@ -56,9 +58,14 @@ class PredictionRepository:
                 AND c.timestamp <= '{end_date_str}'
             """
 
-            # Add to tasks list
+            # Process the camera query with masking information
             prediction_data = self._process_camera_query(
-                query, project_id, area_id, camera.camera_id, camera.position
+                query,
+                project_id,
+                area_id,
+                camera.camera_id,
+                camera.position,
+                camera.enable_masking,
             )
 
             # Append the result to the list
@@ -67,7 +74,13 @@ class PredictionRepository:
         return prediction_data_list
 
     def _process_camera_query(
-        self, query: str, project_id: str, area_id: str, camera_id: str, position: str
+        self,
+        query: str,
+        project_id: str,
+        area_id: str,
+        camera_id: str,
+        position: str,
+        enable_masking: bool,
     ) -> PredictionData:
         """
         Process a query for a specific camera position.
@@ -78,6 +91,7 @@ class PredictionRepository:
             area_id: Area identifier for count lookup
             camera_id: Camera identifier
             position: Camera position
+            enable_masking: Whether masking is enabled for this camera configuration
 
         Returns:
             PredictionData with camera's dates and counts
@@ -96,17 +110,56 @@ class PredictionRepository:
         # Process each result
         for prediction in query_results:
             try:
-                # Extract timestamp and count for the requested area
+                # Extract timestamp
                 timestamp_str = prediction["timestamp"]
 
                 # Convert string timestamp to datetime object retaining UTC timezone info
                 timestamp = datetime.strptime(timestamp_str, DATETIME_FORMAT)
 
+                # Determine which count to use based on masking configuration
+                if enable_masking:
+                    # Use area-specific count when masking is enabled
+                    if area_id not in prediction["counts"]:
+                        self.logger.warning(
+                            f"Masking enabled but area '{area_id}' not found in counts for "
+                            f"camera {camera_id} at {timestamp_str}. Available keys: {list(prediction['counts'].keys())}"
+                        )
+                        continue  # Skip this prediction as it's missing expected area data
+
+                    count = prediction["counts"][area_id]
+                else:
+                    # Use total count when masking is disabled
+                    if "total" not in prediction["counts"]:
+                        self.logger.warning(
+                            f"Masking disabled but 'total' not found in counts for "
+                            f"camera {camera_id} at {timestamp_str}. Available keys: {list(prediction['counts'].keys())}"
+                        )
+                        continue  # Skip this prediction as it's missing expected total data
+
+                    count = prediction["counts"]["total"]
+
+                # Only add to both arrays if we successfully extracted both timestamp and count
                 dates.append(timestamp)
-                counts.append(prediction["counts"][area_id])
-            except KeyError:
-                # Skip predictions that don't have counts for this area
+                counts.append(count)
+
+            except KeyError as e:
+                # Skip predictions that have structural issues
+                self.logger.warning(
+                    f"Skipping prediction due to missing key {e} for camera {camera_id} at position {position}"
+                )
                 continue
+            except ValueError as e:
+                # Skip predictions with invalid timestamp format
+                self.logger.warning(
+                    f"Skipping prediction due to invalid timestamp format: {e}"
+                )
+                continue
+
+        # Log the results for debugging
+        self.logger.info(
+            f"Retrieved {len(counts)} predictions for camera {camera_id} at position {position} "
+            f"(masking {'enabled' if enable_masking else 'disabled'})"
+        )
 
         # Return structured prediction data
         return PredictionData(
