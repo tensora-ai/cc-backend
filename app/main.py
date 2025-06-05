@@ -1,8 +1,15 @@
+import logging
+
 from fastapi import FastAPI
 from app.api.routes import router
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Suppress verbose logging from Azure Storage client
+logging.getLogger(
+    "azure.storage.common.storageclient"
+).setLevel(logging.WARNING)
 
 # Create FastAPI application with security dependencies
 app = FastAPI(

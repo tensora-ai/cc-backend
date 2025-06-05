@@ -7,10 +7,14 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 class CameraPosition(BaseModel):
-    """Represents a camera at a specific position."""
+    """Represents a camera at a specific position with masking information."""
 
     camera_id: str = Field(..., description="Unique identifier for the camera")
     position: str = Field(..., description="Position setting name for the camera")
+    enable_masking: bool = Field(
+        default=False,
+        description="Whether masking is enabled for this camera configuration",
+    )
 
     def __str__(self) -> str:
         return f"{self.camera_id}@{self.position}"
