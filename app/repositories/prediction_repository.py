@@ -49,7 +49,8 @@ class PredictionRepository:
             # Create the query
             query = f"""
                 SELECT * FROM c 
-                WHERE c.camera = '{camera.camera_id}' 
+                WHERE c.project = '{project_id}' 
+                AND c.camera = '{camera.camera_id}'
                 AND c.position = '{camera.position}' 
                 AND c.timestamp >= '{start_date_str}' 
                 AND c.timestamp <= '{end_date_str}'
