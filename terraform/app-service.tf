@@ -69,6 +69,8 @@ resource "azurerm_linux_web_app" "count_backend" {
     COSMOS_DB_PRIMARY_KEY               = azurerm_cosmosdb_account.count.primary_key
     COSMOS_DB_DATABASE_NAME             = azurerm_cosmosdb_sql_database.count.name
     AZURE_STORAGE_CONNECTION_STRING     = azurerm_storage_account.count.primary_blob_connection_string
+    PREDICT_BACKEND_BASE_URL            = var.predict_backend_base_url
+    PREDICT_BACKEND_API_KEY             = var.predict_backend_api_key
     // COSMOS_DB_ENDPOINT              = data.azurerm_cosmosdb_account.count_old.endpoint
     // COSMOS_DB_PRIMARY_KEY           = data.azurerm_cosmosdb_account.count_old.primary_key
     // COSMOS_DB_DATABASE_NAME         = data.azurerm_cosmosdb_sql_database.count_old.name

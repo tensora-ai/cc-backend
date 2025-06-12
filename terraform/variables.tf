@@ -28,3 +28,13 @@ variable "log_level" {
   description = "Log level for the application"
   default     = "INFO"
 }
+
+variable "predict_backend_base_url" {
+  type        = string
+  description = "Base URL for the prediction backend" 
+}
+
+variable "predict_backend_api_key" {
+  type        = string
+  description = "API Key for the prediction backend"
+}
