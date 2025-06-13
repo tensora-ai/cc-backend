@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     # Security settings
     API_KEY: str
 
+    # Prediction backend settings
+    PREDICT_BACKEND_BASE_URL: str
+    PREDICT_BACKEND_API_KEY: str
+
     model_config = SettingsConfigDict(
         env_file=env_file_path if env_file_path.exists() else None,
         extra="forbid",
@@ -42,4 +46,6 @@ settings = Settings(
     AZURE_STORAGE_CONNECTION_STRING=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
     LOG_LEVEL=os.getenv("LOG_LEVEL"),
     API_KEY=os.getenv("API_KEY"),
+    PREDICT_BACKEND_BASE_URL=os.getenv("PREDICT_BACKEND_BASE_URL"),
+    PREDICT_BACKEND_API_KEY=os.getenv("PREDICT_BACKEND_API_KEY"),
 )

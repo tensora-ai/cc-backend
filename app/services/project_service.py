@@ -4,14 +4,20 @@ from fastapi import Depends
 
 from app.models.project import Project, Camera, Area, CameraConfig, ProjectCreate
 from app.repositories.project_repository import ProjectRepository
+from app.services.cache_service import CacheService, get_cache_service
 from app.core.database import get_container
+from app.core.logging import get_logger
 
 
 class ProjectService:
     """Service for managing projects, cameras, areas and camera configurations."""
 
-    def __init__(self, project_repository: ProjectRepository):
+    def __init__(
+        self, project_repository: ProjectRepository, cache_service: CacheService
+    ):
         self.repository = project_repository
+        self.cache_service = cache_service
+        self.logger = get_logger(__name__)
 
     def list_projects(self) -> List[Project]:
         """List all projects."""
@@ -25,7 +31,7 @@ class ProjectService:
             return None
         return Project.model_validate(item)
 
-    def create_project(self, project_data: ProjectCreate) -> Project:
+    async def create_project(self, project_data: ProjectCreate) -> Project:
         """Create a new project."""
         # Check if project already exists
         existing_project = self.get_project(project_data.id)
@@ -38,15 +44,26 @@ class ProjectService:
         # Create in database
         created_item = self.repository.create_project(new_project.model_dump())
 
+        # Clear cache after successful creation
+        await self.cache_service.clear_project_cache(
+            project_data.id, "project creation"
+        )
+
         # Return the created project
         return Project.model_validate(created_item)
 
-    def delete_project(self, project_id: str) -> bool:
+    async def delete_project(self, project_id: str) -> bool:
         """Delete a project."""
-        return self.repository.delete_project(project_id)
+        success = self.repository.delete_project(project_id)
+
+        if success:
+            # Clear cache after successful deletion
+            await self.cache_service.clear_project_cache(project_id, "project deletion")
+
+        return success
 
     # Camera operations
-    def add_camera(self, project_id: str, camera_data: Camera) -> Project:
+    async def add_camera(self, project_id: str, camera_data: Camera) -> Project:
         """Add a camera to a project."""
         # Get the project
         project = self.get_project(project_id)
@@ -63,10 +80,15 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id, f"camera addition (camera: {camera_data.id})"
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
-    def update_camera(
+    async def update_camera(
         self, project_id: str, camera_id: str, camera_data: Dict[str, Any]
     ) -> Project:
         """Update a camera in a project."""
@@ -98,10 +120,15 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id, f"camera update (camera: {camera_id})"
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
-    def delete_camera(self, project_id: str, camera_id: str) -> Project:
+    async def delete_camera(self, project_id: str, camera_id: str) -> Project:
         """Delete a camera from a project and remove any configurations using it."""
         # Get the project
         project = self.get_project(project_id)
@@ -124,11 +151,16 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id, f"camera deletion (camera: {camera_id})"
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
     # Area operations
-    def add_area(self, project_id: str, area_data: Area) -> Project:
+    async def add_area(self, project_id: str, area_data: Area) -> Project:
         """Add an area to a project."""
         # Get the project
         project = self.get_project(project_id)
@@ -145,10 +177,15 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id, f"area addition (area: {area_data.id})"
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
-    def update_area(
+    async def update_area(
         self, project_id: str, area_id: str, area_data: Dict[str, Any]
     ) -> Project:
         """Update an area in a project."""
@@ -180,10 +217,15 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id, f"area update (area: {area_id})"
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
-    def delete_area(self, project_id: str, area_id: str) -> Project:
+    async def delete_area(self, project_id: str, area_id: str) -> Project:
         """Delete an area from a project."""
         # Get the project
         project = self.get_project(project_id)
@@ -200,11 +242,16 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id, f"area deletion (area: {area_id})"
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
     # Camera configuration operations
-    def add_camera_config(
+    async def add_camera_config(
         self, project_id: str, area_id: str, config_data: Dict[str, Any]
     ) -> Project:
         """Add a camera configuration to an area."""
@@ -229,7 +276,7 @@ class ProjectService:
             for c in project.areas[area_index].camera_configs
         ):
             raise ValueError(
-                f"Camera Config with ID {config_data.get("id")} already exists in this area"
+                f"Camera Config with ID {config_data.get('id')} already exists in this area"
             )
 
         # Get camera ID from the config data
@@ -268,10 +315,16 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id,
+            f"camera config addition (area: {area_id}, config: {config_data.get('id')})",
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
-    def update_camera_config(
+    async def update_camera_config(
         self,
         project_id: str,
         area_id: str,
@@ -324,10 +377,16 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id,
+            f"camera config update (area: {area_id}, config: {camera_config_id})",
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
-    def delete_camera_config(
+    async def delete_camera_config(
         self, project_id: str, area_id: str, camera_config_id: str
     ) -> Project:
         """Delete a camera configuration from an area."""
@@ -364,6 +423,12 @@ class ProjectService:
         # Update project in database
         updated_item = self.repository.update_project(project_id, project.model_dump())
 
+        # Clear cache after successful update
+        await self.cache_service.clear_project_cache(
+            project_id,
+            f"camera config deletion (area: {area_id}, config: {camera_config_id})",
+        )
+
         # Return updated project
         return Project.model_validate(updated_item)
 
@@ -373,6 +438,7 @@ def get_project_service(
     project_repository: ProjectRepository = Depends(
         lambda: ProjectRepository(get_container("projects"))
     ),
+    cache_service: CacheService = Depends(get_cache_service),
 ):
     """Factory function to create a ProjectService instance."""
-    return ProjectService(project_repository)
+    return ProjectService(project_repository, cache_service)
