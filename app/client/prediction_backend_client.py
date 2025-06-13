@@ -3,7 +3,6 @@ from typing import Optional
 
 from app.config import settings
 from app.core.logging import get_logger
-from app.config import settings
 
 
 class PredictionBackendClient:

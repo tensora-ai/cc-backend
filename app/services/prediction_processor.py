@@ -3,7 +3,6 @@ from scipy.interpolate import interp1d
 from typing import List
 from datetime import datetime, timedelta
 
-from app.core.logging import get_logger
 from app.models.prediction import (
     TimeSeriesPoint,
     PredictionData,
